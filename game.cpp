@@ -7,14 +7,15 @@ constexpr auto tank_max_health = 1000;
 constexpr auto rocket_hit_value = 60;
 constexpr auto particle_beam_hit_value = 50;
 
-constexpr auto tank_max_speed = 1.0;
+constexpr auto tank_max_speed = 1000;
 
 constexpr auto health_bar_width = 70;
 
 constexpr auto max_frames = 2000;
 
 //Global performance timer
-constexpr auto REF_PERFORMANCE = 114757; //UPDATE THIS WITH YOUR REFERENCE PERFORMANCE (see console after 2k frames)
+//constexpr auto REF_PERFORMANCE = 430730; // Debug reference performance
+constexpr auto REF_PERFORMANCE = 68916; // Release reference performance
 static timer perf_timer;
 static float duration;
 
@@ -126,91 +127,124 @@ bool Tmpl8::Game::left_of_line(vec2 line_start, vec2 line_end, vec2 point)
 // -----------------------------------------------------------
 void Game::update(float deltaTime)
 {
-    //Calculate the route to the destination for each tank using BFS
-    //Initializing routes here so it gets counted for performance..
-    if (frame_count == 0)
-    {
-        for (Tank& t : tanks)
-        {
-            t.set_route(background_terrain.get_route(t, t.target));
-        }
-    }
+    calculate_tank_routes();
 
-    //Check tank collision and nudge tanks away from each other
-    for (Tank& tank : tanks)
-    {
-        if (tank.active)
-        {
-            for (Tank& other_tank : tanks)
-            {
-                if (&tank == &other_tank || !other_tank.active) continue;
+    check_tank_collision();
 
-                vec2 dir = tank.get_position() - other_tank.get_position();
-                float dir_squared_len = dir.sqr_length();
+    update_tanks();
 
-                float col_squared_len = (tank.get_collision_radius() + other_tank.get_collision_radius());
-                col_squared_len *= col_squared_len;
-
-                if (dir_squared_len < col_squared_len)
-                {
-                    tank.push(dir.normalized(), 1.f);
-                }
-            }
-        }
-    }
-
-    //Update tanks
-    for (Tank& tank : tanks)
-    {
-        if (tank.active)
-        {
-            //Move tanks according to speed and nudges (see above) also reload
-            tank.tick(background_terrain);
-
-            //Shoot at closest target if reloaded
-            if (tank.rocket_reloaded())
-            {
-                Tank& target = find_closest_enemy(tank);
-
-                rockets.push_back(Rocket(tank.position, (target.get_position() - tank.position).normalized() * 3, rocket_radius, tank.allignment, ((tank.allignment == RED) ? &rocket_red : &rocket_blue)));
-
-                tank.reload_rocket();
-            }
-        }
-    }
-
-    //Update smoke plumes
-    for (Smoke& smoke : smokes)
-    {
-        smoke.tick();
-    }
+    update_smokes();
 
     //Calculate "forcefield" around active tanks
     forcefield_hull.clear();
 
     //Find first active tank (this loop is a bit disgusting, fix?)
     int first_active = 0;
-    for (Tank& tank : tanks)
-    {
-        if (tank.active)
-        {
-            break;
-        }
-        first_active++;
-    }
+    find_first_active_tank(first_active);
     vec2 point_on_hull = tanks.at(first_active).position;
     //Find left most tank position
-    for (Tank& tank : tanks)
+    find_most_left_tank(point_on_hull);
+
+    calculate_rockets_convex_hull(point_on_hull, first_active);
+
+    update_rockets();
+
+    disable_rockets();
+
+    //Remove exploded rockets with remove erase idiom
+    rockets.erase(std::remove_if(rockets.begin(), rockets.end(), [](const Rocket& rocket) { return !rocket.active; }), rockets.end());
+
+
+    update_particle_beams();
+
+    update_explosions();
+
+    explosions.erase(std::remove_if(explosions.begin(), explosions.end(), [](const Explosion& explosion) { return explosion.done(); }), explosions.end());
+
+
+}
+
+void Tmpl8::Game::update_explosions()
+{
+    //Update explosion sprites and remove when done with remove erase idiom
+    for (Explosion& explosion : explosions)
     {
-        if (tank.active)
+        explosion.tick();
+    }
+
+    
+}
+
+void Tmpl8::Game::update_particle_beams()
+{
+    //Update particle beams
+    for (Particle_beam& particle_beam : particle_beams)
+    {
+        particle_beam.tick(tanks);
+
+        //Damage all tanks within the damage window of the beam (the window is an axis-aligned bounding box)
+        for (Tank& tank : tanks)
         {
-            if (tank.position.x <= point_on_hull.x)
+            if (tank.active && particle_beam.rectangle.intersects_circle(tank.get_position(), tank.get_collision_radius()))
             {
-                point_on_hull = tank.position;
+                if (tank.hit(particle_beam.damage))
+                {
+                    smokes.push_back(Smoke(smoke, tank.position - vec2(0, 48)));
+                }
+            }
+        }
+    }
+}
+
+void Tmpl8::Game::disable_rockets()
+{
+    //Disable rockets if they collide with the "forcefield"
+    //Hint: A point to convex hull intersection test might be better here? :) (Disable if outside)
+    for (Rocket& rocket : rockets)
+    {
+        if (rocket.active)
+        {
+            for (size_t i = 0; i < forcefield_hull.size(); i++)
+            {
+                if (circle_segment_intersect(forcefield_hull.at(i), forcefield_hull.at((i + 1) % forcefield_hull.size()), rocket.position, rocket.collision_radius))
+                {
+                    explosions.push_back(Explosion(&explosion, rocket.position));
+                    rocket.active = false;
+                }
             }
         }
     }
 
+}
+
+void Tmpl8::Game::update_rockets()
+{
+    //Update rockets
+    for (Rocket& rocket : rockets)
+    {
+        rocket.tick();
+
+        //Check if rocket collides with enemy tank, spawn explosion, and if tank is destroyed spawn a smoke plume
+        for (Tank& tank : tanks)
+        {
+            if (tank.active && (tank.allignment != rocket.allignment) && rocket.intersects(tank.position, tank.collision_radius))
+            {
+                explosions.push_back(Explosion(&explosion, tank.position));
+
+                if (tank.hit(rocket_hit_value))
+                {
+                    smokes.push_back(Smoke(smoke, tank.position - vec2(7, 24)));
+                }
+
+                rocket.active = false;
+                break;
+            }
+        }
+    }
+}
+
+void Tmpl8::Game::calculate_rockets_convex_hull(Tmpl8::vec2& point_on_hull, int first_active)
+{
     //Calculate convex hull for 'rocket barrier'
     while (true)
     {
@@ -241,77 +275,103 @@ void Game::update(float deltaTime)
             break;
         }
     }
+}
 
-    //Update rockets
-    for (Rocket& rocket : rockets)
+void Tmpl8::Game::find_most_left_tank(Tmpl8::vec2& point_on_hull)
+{
+    for (Tank& tank : tanks)
     {
-        rocket.tick();
-
-        //Check if rocket collides with enemy tank, spawn explosion, and if tank is destroyed spawn a smoke plume
-        for (Tank& tank : tanks)
+        if (tank.active)
         {
-            if (tank.active && (tank.allignment != rocket.allignment) && rocket.intersects(tank.position, tank.collision_radius))
+            if (tank.position.x <= point_on_hull.x)
             {
-                explosions.push_back(Explosion(&explosion, tank.position));
-
-                if (tank.hit(rocket_hit_value))
-                {
-                    smokes.push_back(Smoke(smoke, tank.position - vec2(7, 24)));
-                }
-
-                rocket.active = false;
-                break;
+                point_on_hull = tank.position;
             }
         }
     }
+}
 
-    //Disable rockets if they collide with the "forcefield"
-    //Hint: A point to convex hull intersection test might be better here? :) (Disable if outside)
-    for (Rocket& rocket : rockets)
+void Tmpl8::Game::find_first_active_tank(int& first_active)
+{
+    for (Tank& tank : tanks)
     {
-        if (rocket.active)
+        if (tank.active)
         {
-            for (size_t i = 0; i < forcefield_hull.size(); i++)
+            break;
+        }
+        first_active++;
+    }
+}
+
+void Tmpl8::Game::update_smokes()
+{
+    //Update smoke plumes
+    for (Smoke& smoke : smokes)
+    {
+        smoke.tick();
+    }
+}
+
+void Tmpl8::Game::update_tanks()
+{
+    //Update tanks
+    for (Tank& tank : tanks)
+    {
+        if (tank.active)
+        {
+            //Move tanks according to speed and nudges (see above) also reload
+            tank.tick(background_terrain);
+
+            //Shoot at closest target if reloaded
+            if (tank.rocket_reloaded())
             {
-                if (circle_segment_intersect(forcefield_hull.at(i), forcefield_hull.at((i + 1) % forcefield_hull.size()), rocket.position, rocket.collision_radius))
+                Tank& target = find_closest_enemy(tank);
+
+                rockets.push_back(Rocket(tank.position, (target.get_position() - tank.position).normalized() * 3, rocket_radius, tank.allignment, ((tank.allignment == RED) ? &rocket_red : &rocket_blue)));
+
+                tank.reload_rocket();
+            }
+        }
+    }
+}
+
+void Tmpl8::Game::check_tank_collision()
+{
+    //Check tank collision and nudge tanks away from each other
+    for (Tank& tank : tanks)
+    {
+        if (tank.active)
+        {
+            for (Tank& other_tank : tanks)
+            {
+                if (&tank == &other_tank || !other_tank.active) continue;
+
+                vec2 dir = tank.get_position() - other_tank.get_position();
+                float dir_squared_len = dir.sqr_length();
+
+                float col_squared_len = (tank.get_collision_radius() + other_tank.get_collision_radius());
+                col_squared_len *= col_squared_len;
+
+                if (dir_squared_len < col_squared_len)
                 {
-                    explosions.push_back(Explosion(&explosion, rocket.position));
-                    rocket.active = false;
+                    tank.push(dir.normalized(), 1.f);
                 }
             }
         }
     }
+}
 
-
-
-    //Remove exploded rockets with remove erase idiom
-    rockets.erase(std::remove_if(rockets.begin(), rockets.end(), [](const Rocket& rocket) { return !rocket.active; }), rockets.end());
-
-    //Update particle beams
-    for (Particle_beam& particle_beam : particle_beams)
+void Tmpl8::Game::calculate_tank_routes()
+{
+    //Calculate the route to the destination for each tank using BFS
+    //Initializing routes here so it gets counted for performance..
+    if (frame_count == 0)
     {
-        particle_beam.tick(tanks);
-
-        //Damage all tanks within the damage window of the beam (the window is an axis-aligned bounding box)
-        for (Tank& tank : tanks)
+        for (Tank& t : tanks)
         {
-            if (tank.active && particle_beam.rectangle.intersects_circle(tank.get_position(), tank.get_collision_radius()))
-            {
-                if (tank.hit(particle_beam.damage))
-                {
-                    smokes.push_back(Smoke(smoke, tank.position - vec2(0, 48)));
-                }
-            }
+            t.set_route(background_terrain.get_route(t, t.target));
         }
     }
-
-    //Update explosion sprites and remove when done with remove erase idiom
-    for (Explosion& explosion : explosions)
-    {
-        explosion.tick();
-    }
-
-    explosions.erase(std::remove_if(explosions.begin(), explosions.end(), [](const Explosion& explosion) { return explosion.done(); }), explosions.end());
 }
 
 // -----------------------------------------------------------

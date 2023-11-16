@@ -7,7 +7,7 @@ constexpr auto tank_max_health = 1000;
 constexpr auto rocket_hit_value = 60;
 constexpr auto particle_beam_hit_value = 50;
 
-constexpr auto tank_max_speed = 1000;
+constexpr auto tank_max_speed = 1.0;
 
 constexpr auto health_bar_width = 70;
 

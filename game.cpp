@@ -15,6 +15,7 @@ constexpr auto max_frames = 2000;
 
 //Global performance timer
 //constexpr auto REF_PERFORMANCE = 430730; // Debug reference performance
+//constexpr auto REF_PERFORMANCE = 795076; // Non optimized Release reference performance
 constexpr auto REF_PERFORMANCE = 68916; // Release reference performance
 static timer perf_timer;
 static float duration;
@@ -425,55 +426,147 @@ void Game::draw()
     }
 
     //Draw sorted health bars
-    for (int t = 0; t < 2; t++)
+    for (int team = 0; team < 2; team++)
     {
-        const int NUM_TANKS = ((t < 1) ? num_tanks_blue : num_tanks_red);
+        const int NUM_TANKS = ((team < 1) ? num_tanks_blue : num_tanks_red);
 
-        const int begin = ((t < 1) ? 0 : num_tanks_blue);
-        std::vector<const Tank*> sorted_tanks;
-        insertion_sort_tanks_health(tanks, sorted_tanks, begin, begin + NUM_TANKS);
+        const int begin = ((team < 1) ? 0 : num_tanks_blue);
+        std::vector<Tank*> sorted_tanks;
+
+        quick_sort(tanks, begin, begin + NUM_TANKS, sorted_tanks);
         sorted_tanks.erase(std::remove_if(sorted_tanks.begin(), sorted_tanks.end(), [](const Tank* tank) { return !tank->active; }), sorted_tanks.end());
 
-        draw_health_bars(sorted_tanks, t);
+        draw_health_bars(sorted_tanks, team);
     }
 }
+
+
+int Tmpl8::Game::get_median(std::vector<Tank>& input, int begin, int end, bool value)
+{
+
+    const int NUM_TANKS = end - begin;
+    const int center = NUM_TANKS / 2;
+    const int tank_health_at_begin = input.at(begin).health;
+    const int tank_health_at_center = input.at(center - 1).health;
+    const int tank_health_at_end = input.at(end - 1).health;
+
+    std::vector<int> index_values = { tank_health_at_begin, tank_health_at_center, tank_health_at_end };
+
+
+    for (int i = 0; i < index_values.size(); i++) {
+        for (int j = 0; j < index_values.size() - 1; j++)
+        {
+            if (index_values.at(j) > index_values.at(j + 1))
+            {
+                swap(index_values.at(j), index_values.at(j + 1));
+            }
+        }
+    }
+
+    if (!value)
+    {
+        return center;
+    }
+    else
+    {
+        return index_values.at(1);
+    }
+
+   
+}
+
+
+
+std::vector<Tank*>& Tmpl8::Game::quick_sort(std::vector<Tank>& input, int begin, int end, std::vector<Tank*>& sorted_tanks) {
+    
+    if (input.size() < 2) {
+
+       return input;
+    }
+
+    //std::vector<Tank> result;
+    int pivot = get_median(input, begin, end, true);
+    int middle = get_median(input, begin, end, false);
+    
+
+    // eerste helft van lijst in result lijst
+    std::vector<Tank> left_of_list;
+
+    sorted_tanks.reserve(middle + 1);
+    left_of_list.insert(left_of_list.end(), input.begin(), left_of_list.at(middle));
+
+    std::vector<Tank> right_of_list;
+
+    for (int i = 0; i < input.size(); i++)
+    {
+        if (input.at(i).health < pivot) 
+        {
+            left_of_list.push_back(input.at(i));
+        }
+        else {
+            right_of_list.push_back(input.at(i));
+        }
+    }
+
+    std::vector<Tank*> left = quick_sort(left_of_list, 0, left_of_list.size() - 1, sorted_tanks);
+    std::vector<Tank*> right = quick_sort(right_of_list, 0, right_of_list.size() - 1, sorted_tanks);
+
+    sorted_tanks.reserve(left.size() + right.size());
+    sorted_tanks.insert(sorted_tanks.end(), left.begin(), left.end());
+    sorted_tanks.insert(sorted_tanks.end(), right.begin(), right.end());
+
+    return sorted_tanks;
+
+}
+
+
+
 
 // -----------------------------------------------------------
 // Sort tanks by health value using insertion sort
 // -----------------------------------------------------------
-void Tmpl8::Game::insertion_sort_tanks_health(const std::vector<Tank>& original, std::vector<const Tank*>& sorted_tanks, int begin, int end)
-{
-    const int NUM_TANKS = end - begin;
-    sorted_tanks.reserve(NUM_TANKS);
-    sorted_tanks.emplace_back(&original.at(begin));
 
-    for (int i = begin + 1; i < (begin + NUM_TANKS); i++)
-    {
-        const Tank& current_tank = original.at(i);
+//void Tmpl8::Game::insertion_sort_tanks_health(const std::vector<Tank>& original, std::vector<const Tank*>& sorted_tanks, int begin, int end)
+//{
+//    const int NUM_TANKS = end - begin;
+//    sorted_tanks.reserve(NUM_TANKS);
+//    sorted_tanks.emplace_back(&original.at(begin));
+//
+//    for (int i = begin + 1; i < (begin + NUM_TANKS); i++)
+//    {
+//        const Tank& current_tank = original.at(i);
+//
+//        for (int s = (int)sorted_tanks.size() - 1; s >= 0; s--)
+//        {
+//            const Tank* current_checking_tank = sorted_tanks.at(s);
+//
+//            if ((current_checking_tank->compare_health(current_tank) <= 0))
+//            {
+//                sorted_tanks.insert(1 + sorted_tanks.begin() + s, &current_tank);
+//                break;
+//            }
+//
+//            if (s == 0)
+//            {
+//                sorted_tanks.insert(sorted_tanks.begin(), &current_tank);
+//                break;
+//            }
+//        }
+//    }
+//}
 
-        for (int s = (int)sorted_tanks.size() - 1; s >= 0; s--)
-        {
-            const Tank* current_checking_tank = sorted_tanks.at(s);
+// -----------------------------------------------------------
+// Sort tanks by health value using quick sort
+// -----------------------------------------------------------
 
-            if ((current_checking_tank->compare_health(current_tank) <= 0))
-            {
-                sorted_tanks.insert(1 + sorted_tanks.begin() + s, &current_tank);
-                break;
-            }
 
-            if (s == 0)
-            {
-                sorted_tanks.insert(sorted_tanks.begin(), &current_tank);
-                break;
-            }
-        }
-    }
-}
+
+
 
 // -----------------------------------------------------------
 // Draw the health bars based on the given tanks health values
 // -----------------------------------------------------------
-void Tmpl8::Game::draw_health_bars(const std::vector<const Tank*>& sorted_tanks, const int team)
+void Tmpl8::Game::draw_health_bars(const std::vector<Tank*>& sorted_tanks, const int team)
 {
     int health_bar_start_x = (team < 1) ? 0 : (SCRWIDTH - HEALTHBAR_OFFSET) - 1;
     int health_bar_end_x = (team < 1) ? health_bar_width : health_bar_start_x + health_bar_width - 1;

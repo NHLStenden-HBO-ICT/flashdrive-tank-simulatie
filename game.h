@@ -15,6 +15,17 @@ class Game
     void init();
     void shutdown();
     void update(float deltaTime);
+    void update_explosions();
+    void update_particle_beams();
+    void disable_rockets();
+    void update_rockets();
+    void calculate_rockets_convex_hull(Tmpl8::vec2& point_on_hull, int first_active);
+    void find_most_left_tank(Tmpl8::vec2& point_on_hull);
+    void find_first_active_tank(int& first_active);
+    void update_smokes();
+    void update_tanks();
+    void check_tank_collision();
+    void calculate_tank_routes();
     void draw();
     void tick(float deltaTime);
     void insertion_sort_tanks_health(const std::vector<Tank>& original, std::vector<const Tank*>& sorted_tanks, int begin, int end);

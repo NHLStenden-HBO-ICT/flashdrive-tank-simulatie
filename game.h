@@ -29,10 +29,12 @@ class Game
     void draw();
     void tick(float deltaTime);
     void insertion_sort_tanks_health(const std::vector<Tank>& original, std::vector<const Tank*>& sorted_tanks, int begin, int end);
-    int get_median(std::vector<Tank>& input, int begin, int end, bool value);
+    int get_median(std::vector<Tank>& input, int begin, int end);
     //void quick_sort_tanks_health(std::vector<Tank>& original, std::vector<const Tank*>& sorted_tanks, int begin, int end);
-    std::vector<Tank*>& quick_sort(std::vector<Tank>& input, int begin, int end, std::vector<Tank*>& sorted_tanks);
-    void draw_health_bars(const std::vector<Tank*>& sorted_tanks, const int team);
+    void quick_sort_init(const std::vector<Tank>& input, std::vector<const Tank*>& sorted_tanks, int begin, int end);
+    std::vector<Tank*> quick_sort(const std::vector<Tank>& input, std::vector<const Tank*>& sorted_tanks, int begin, int end);
+    int partition(const std::vector<Tank>& input, std::vector<const Tank*>& sorted_tanks, int begin, int end);
+    void draw_health_bars(const std::vector<const Tank*>& sorted_tanks, const int team);
     void measure_performance();
 
     Tank& find_closest_enemy(Tank& current_tank);

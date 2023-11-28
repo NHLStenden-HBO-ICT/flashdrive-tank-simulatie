@@ -1,4 +1,9 @@
 #include "precomp.h" // include (only) this in every .cpp file
+#include "smoke.h"
+#include "tank.h"
+#include "rocket.h"
+#include "explosion.h"
+#include "particle_beam.h"
 
 constexpr auto num_tanks_blue = 2048;
 constexpr auto num_tanks_red = 2048;
@@ -133,7 +138,9 @@ void Game::update(float deltaTime)
 
     update_tanks();
 
-    update_smokes();
+   // update_smokes();
+    Smoke::update(smokes);
+
 
     //Calculate "forcefield" around active tanks
     forcefield_hull.clear();
@@ -300,15 +307,6 @@ void Tmpl8::Game::find_first_active_tank(int& first_active)
             break;
         }
         first_active++;
-    }
-}
-
-void Tmpl8::Game::update_smokes()
-{
-    //Update smoke plumes
-    for (Smoke& smoke : smokes)
-    {
-        smoke.tick();
     }
 }
 

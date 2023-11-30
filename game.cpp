@@ -132,7 +132,7 @@ bool Tmpl8::Game::left_of_line(vec2 line_start, vec2 line_end, vec2 point)
 // -----------------------------------------------------------
 void Game::update(float deltaTime)
 {
-    calculate_tank_routes();
+    Tank::calculate_tank_routes(tanks, background_terrain, frame_count);
 
     check_tank_collision();
 
@@ -359,18 +359,7 @@ void Tmpl8::Game::check_tank_collision()
     }
 }
 
-void Tmpl8::Game::calculate_tank_routes()
-{
-    //Calculate the route to the destination for each tank using BFS
-    //Initializing routes here so it gets counted for performance..
-    if (frame_count == 0)
-    {
-        for (Tank& t : tanks)
-        {
-            t.set_route(background_terrain.get_route(t, t.target));
-        }
-    }
-}
+
 
 // -----------------------------------------------------------
 // Draw all sprites to the screen

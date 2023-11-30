@@ -129,4 +129,17 @@ void Tank::push(vec2 direction, float magnitude)
     force += direction * magnitude;
 }
 
+void Tank::calculate_tank_routes(vector<Tank> & tanks, Terrain& background_terrain, long long& frame_count)
+{
+    //Calculate the route to the destination for each tank using BFS
+    //Initializing routes here so it gets counted for performance..
+    if (frame_count == 0)
+    {
+        for (Tank& t : tanks)
+        {
+            t.set_route(background_terrain.get_route(t, t.target));
+        }
+    }
+}
+
 } // namespace Tmpl8

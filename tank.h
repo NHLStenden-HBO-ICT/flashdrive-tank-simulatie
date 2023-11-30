@@ -59,6 +59,8 @@ class Tank
     Sprite* tank_sprite;
     Sprite* smoke_sprite;
 
+    static void calculate_tank_routes(vector<Tank>& tanks, Terrain& background_terrain, long long& frame_count);
+
 };
 
 } // namespace Tmpl8

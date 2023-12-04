@@ -1,4 +1,6 @@
 #pragma once
+#include "Explosion.h"
+#include "Smoke.h"
 
 namespace Tmpl8
 {

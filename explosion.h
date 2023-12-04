@@ -16,6 +16,8 @@ class Explosion
 
     int current_frame;
     Sprite* explosion_sprite;
+
+    static void update_explosions(vector<Explosion>& explosions);
 };
 
 }

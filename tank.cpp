@@ -142,4 +142,77 @@ void Tank::calculate_tank_routes(vector<Tank> & tanks, Terrain& background_terra
     }
 }
 
+void Tank::check_tank_collision(vector<Tank>& tanks)
+{
+    //Check tank collision and nudge tanks away from each other
+    for (Tank& tank : tanks)
+    {
+        if (tank.active)
+        {
+            for (Tank& other_tank : tanks)
+            {
+                if (&tank == &other_tank || !other_tank.active) continue;
+
+                vec2 dir = tank.get_position() - other_tank.get_position();
+                float dir_squared_len = dir.sqr_length();
+
+                float col_squared_len = (tank.get_collision_radius() + other_tank.get_collision_radius());
+                col_squared_len *= col_squared_len;
+
+                if (dir_squared_len < col_squared_len)
+                {
+                    tank.push(dir.normalized(), 1.f);
+                }
+            }
+        }
+    }
+}
+
+void Tank::update_tanks(vector<Tank>& tanks, Terrain& background_terrain, vector<Rocket>& rockets, float rocket_radius, Sprite& rocket_red, Sprite& rocket_blue)
+{
+    //Update tanks
+    for (Tank& tank : tanks)
+    {
+        if (tank.active)
+        {
+            //Move tanks according to speed and nudges (see above) also reload
+            tank.tick(background_terrain);
+
+            //Shoot at closest target if reloaded
+            if (tank.rocket_reloaded())
+            {
+                Tank& target = Tank::find_closest_enemy(tank, tanks);
+
+                rockets.push_back(Rocket(tank.position, (target.get_position() - tank.position).normalized() * 3, rocket_radius, tank.allignment, ((tank.allignment == RED) ? &rocket_red : &rocket_blue)));
+
+                tank.reload_rocket();
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------
+// Iterates through all tanks and returns the closest enemy tank for the given tank
+// -----------------------------------------------------------
+Tank& Tank::find_closest_enemy(Tank& current_tank, vector<Tank>& tanks)
+{
+    float closest_distance = numeric_limits<float>::infinity();
+    int closest_index = 0;
+
+    for (int i = 0; i < tanks.size(); i++)
+    {
+        if (tanks.at(i).allignment != current_tank.allignment && tanks.at(i).active)
+        {
+            float sqr_dist = fabsf((tanks.at(i).get_position() - current_tank.get_position()).sqr_length());
+            if (sqr_dist < closest_distance)
+            {
+                closest_distance = sqr_dist;
+                closest_index = i;
+            }
+        }
+    }
+
+    return tanks.at(closest_index);
+}
+
 } // namespace Tmpl8

@@ -116,7 +116,6 @@ void Game::update(float deltaTime)
 
     Smoke::update(smokes);
 
-
     //Calculate "forcefield" around active tanks
     forcefield_hull.clear();
 

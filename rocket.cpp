@@ -42,4 +42,51 @@ bool Rocket::intersects(vec2 position_other, float radius_other) const
     }
 }
 
+void Rocket::update_rockets(vector<Rocket>& rockets, vector<Tank>& tanks, float rocket_hit_value, vector<Explosion>& explosions, Sprite& explosion, vector<Smoke>& smokes, Sprite& smoke)
+{
+    //Update rockets
+    for (Rocket& rocket : rockets)
+    {
+        rocket.tick();
+
+        //Check if rocket collides with enemy tank, spawn explosion, and if tank is destroyed spawn a smoke plume
+        for (Tank& tank : tanks)
+        {
+            if (tank.active && (tank.allignment != rocket.allignment) && rocket.intersects(tank.position, tank.collision_radius))
+            {
+                explosions.push_back(Explosion(&explosion, tank.position));
+
+                if (tank.hit(rocket_hit_value))
+                {
+                    smokes.push_back(Smoke(smoke, tank.position - vec2(7, 24)));
+                }
+
+                rocket.active = false;
+                break;
+            }
+        }
+    }
+}
+
+void Rocket::disable_rockets(vector<Rocket>& rockets, vector<vec2>& forcefield_hull, vector<Explosion> explosions, Sprite& explosion)
+{
+    //Disable rockets if they collide with the "forcefield"
+    //Hint: A point to convex hull intersection test might be better here? :) (Disable if outside)
+    for (Rocket& rocket : rockets)
+    {
+        if (rocket.active)
+        {
+            for (size_t i = 0; i < forcefield_hull.size(); i++)
+            {
+                if (circle_segment_intersect(forcefield_hull.at(i), forcefield_hull.at((i + 1) % forcefield_hull.size()), rocket.position, rocket.collision_radius))
+                {
+                    explosions.push_back(Explosion(&explosion, rocket.position));
+                    rocket.active = false;
+                }
+            }
+        }
+    }
+
+}
+
 } // namespace Tmpl8

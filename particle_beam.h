@@ -21,5 +21,7 @@ class Particle_beam
     int damage;
 
     Sprite* particle_beam_sprite;
+    static void update_particle_beams(vector<Particle_beam>& particle_beams, vector<Tank>& tanks, vector<Smoke>& smokes, Sprite& smoke);
+
 };
 } // namespace Tmpl8

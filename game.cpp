@@ -137,7 +137,7 @@ void Game::update(float deltaTime)
 
     update_particle_beams();
     Explosion::update_explosions(explosions);
-    
+
     explosions.erase(std::remove_if(explosions.begin(), explosions.end(), [](const Explosion& explosion) { return explosion.done(); }), explosions.end());
 
 

@@ -16,4 +16,13 @@ void Smoke::draw(Surface* screen)
     smoke_sprite.draw(screen, (int)position.x + HEALTHBAR_OFFSET, (int)position.y);
 }
 
+void Smoke::update(vector<Smoke>& smokes)
+{
+    //Update smoke plumes
+    for (Smoke& smoke : smokes)
+    {
+        smoke.tick();
+    }
+}
+
 } // namespace Tmpl8

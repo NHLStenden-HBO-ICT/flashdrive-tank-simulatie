@@ -1,4 +1,5 @@
 #pragma once
+
 namespace Tmpl8
 {
 
@@ -14,5 +15,7 @@ class Smoke
 
     int current_frame;
     Sprite& smoke_sprite;
+
+    static void update(vector<Smoke>& smokes);
 };
 } // namespace Tmpl8

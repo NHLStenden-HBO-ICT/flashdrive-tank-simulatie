@@ -1,4 +1,9 @@
 #include "precomp.h" // include (only) this in every .cpp file
+#include "smoke.h"
+#include "tank.h"
+#include "rocket.h"
+#include "explosion.h"
+#include "particle_beam.h"
 
 constexpr auto num_tanks_blue = 2048;
 constexpr auto num_tanks_red = 2048;
@@ -88,29 +93,7 @@ void Game::shutdown()
 {
 }
 
-// -----------------------------------------------------------
-// Iterates through all tanks and returns the closest enemy tank for the given tank
-// -----------------------------------------------------------
-Tank& Game::find_closest_enemy(Tank& current_tank)
-{
-    float closest_distance = numeric_limits<float>::infinity();
-    int closest_index = 0;
 
-    for (int i = 0; i < tanks.size(); i++)
-    {
-        if (tanks.at(i).allignment != current_tank.allignment && tanks.at(i).active)
-        {
-            float sqr_dist = fabsf((tanks.at(i).get_position() - current_tank.get_position()).sqr_length());
-            if (sqr_dist < closest_distance)
-            {
-                closest_distance = sqr_dist;
-                closest_index = i;
-            }
-        }
-    }
-
-    return tanks.at(closest_index);
-}
 
 //Checks if a point lies on the left of an arbitrary angled line
 bool Tmpl8::Game::left_of_line(vec2 line_start, vec2 line_end, vec2 point)
@@ -127,13 +110,11 @@ bool Tmpl8::Game::left_of_line(vec2 line_start, vec2 line_end, vec2 point)
 // -----------------------------------------------------------
 void Game::update(float deltaTime)
 {
-    calculate_tank_routes();
+    Tank::calculate_tank_routes(tanks, background_terrain, frame_count);
+    Tank::check_tank_collision(tanks);
+    Tank::update_tanks(tanks, background_terrain, rockets, rocket_radius, rocket_red, rocket_blue);
 
-    check_tank_collision();
-
-    update_tanks();
-
-    update_smokes();
+    Smoke::update(smokes);
 
     //Calculate "forcefield" around active tanks
     forcefield_hull.clear();
@@ -148,7 +129,6 @@ void Game::update(float deltaTime)
     calculate_rockets_convex_hull(point_on_hull, first_active);
 
     update_rockets();
-
     disable_rockets();
 
     //Remove exploded rockets with remove erase idiom
@@ -156,24 +136,14 @@ void Game::update(float deltaTime)
 
 
     update_particle_beams();
-
-    update_explosions();
+    Explosion::update_explosions(explosions);
 
     explosions.erase(std::remove_if(explosions.begin(), explosions.end(), [](const Explosion& explosion) { return explosion.done(); }), explosions.end());
 
 
 }
 
-void Tmpl8::Game::update_explosions()
-{
-    //Update explosion sprites and remove when done with remove erase idiom
-    for (Explosion& explosion : explosions)
-    {
-        explosion.tick();
-    }
 
-    
-}
 
 void Tmpl8::Game::update_particle_beams()
 {
@@ -303,76 +273,9 @@ void Tmpl8::Game::find_first_active_tank(int& first_active)
     }
 }
 
-void Tmpl8::Game::update_smokes()
-{
-    //Update smoke plumes
-    for (Smoke& smoke : smokes)
-    {
-        smoke.tick();
-    }
-}
 
-void Tmpl8::Game::update_tanks()
-{
-    //Update tanks
-    for (Tank& tank : tanks)
-    {
-        if (tank.active)
-        {
-            //Move tanks according to speed and nudges (see above) also reload
-            tank.tick(background_terrain);
 
-            //Shoot at closest target if reloaded
-            if (tank.rocket_reloaded())
-            {
-                Tank& target = find_closest_enemy(tank);
 
-                rockets.push_back(Rocket(tank.position, (target.get_position() - tank.position).normalized() * 3, rocket_radius, tank.allignment, ((tank.allignment == RED) ? &rocket_red : &rocket_blue)));
-
-                tank.reload_rocket();
-            }
-        }
-    }
-}
-
-void Tmpl8::Game::check_tank_collision()
-{
-    //Check tank collision and nudge tanks away from each other
-    for (Tank& tank : tanks)
-    {
-        if (tank.active)
-        {
-            for (Tank& other_tank : tanks)
-            {
-                if (&tank == &other_tank || !other_tank.active) continue;
-
-                vec2 dir = tank.get_position() - other_tank.get_position();
-                float dir_squared_len = dir.sqr_length();
-
-                float col_squared_len = (tank.get_collision_radius() + other_tank.get_collision_radius());
-                col_squared_len *= col_squared_len;
-
-                if (dir_squared_len < col_squared_len)
-                {
-                    tank.push(dir.normalized(), 1.f);
-                }
-            }
-        }
-    }
-}
-
-void Tmpl8::Game::calculate_tank_routes()
-{
-    //Calculate the route to the destination for each tank using BFS
-    //Initializing routes here so it gets counted for performance..
-    if (frame_count == 0)
-    {
-        for (Tank& t : tanks)
-        {
-            t.set_route(background_terrain.get_route(t, t.target));
-        }
-    }
-}
 
 // -----------------------------------------------------------
 // Draw all sprites to the screen

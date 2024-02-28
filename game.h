@@ -31,6 +31,10 @@ namespace Tmpl8
         void draw();
         void tick(float deltaTime);
         void insertion_sort_tanks_health(const std::vector<Tank>& original, std::vector<const Tank*>& sorted_tanks, int begin, int end);
+        int get_median(const std::vector<const Tank*>& input, int begin, int end);
+        void quick_sort(std::vector<const Tank*>& sorted_tanks, int begin, int end);
+        void quick_sort_init(const std::vector<Tank>& tanks, std::vector<const Tank*>& sorted_tanks, int begin, int end);
+        
         void draw_health_bars(const std::vector<const Tank*>& sorted_tanks, const int team);
         void measure_performance();
 

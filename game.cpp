@@ -19,8 +19,11 @@ constexpr auto health_bar_width = 70;
 constexpr auto max_frames = 2000;
 
 //Global performance timer
-//constexpr auto REF_PERFORMANCE = 430730; // Debug reference performance
-constexpr auto REF_PERFORMANCE = 68916; // Release reference performance
+//constexpr auto REF_PERFORMANCE = 430730; // Debug reference performance Joël
+//constexpr auto REF_PERFORMANCE = 68916; // Release reference performance Joël
+
+constexpr auto REF_PERFORMANCE = 537033; // Debug reference performance Yvonne
+//constexpr auto REF_PERFORMANCE = 132409; // Release reference performance Yvonne
 static timer perf_timer;
 static float duration;
 
@@ -46,6 +49,8 @@ const static vec2 rocket_size(6, 6);
 
 const static float tank_radius = 3.f;
 const static float rocket_radius = 5.f;
+
+static int recursion_count = 0;
 
 // -----------------------------------------------------------
 // Initialize the simulation state
@@ -334,7 +339,10 @@ void Game::draw()
 
         const int begin = ((t < 1) ? 0 : num_tanks_blue);
         std::vector<const Tank*> sorted_tanks;
-        insertion_sort_tanks_health(tanks, sorted_tanks, begin, begin + NUM_TANKS);
+
+        //insertion_sort_tanks_health(tanks, sorted_tanks, begin, begin + NUM_TANKS);
+        quick_sort_init(tanks, sorted_tanks, begin, begin + NUM_TANKS);
+
         sorted_tanks.erase(std::remove_if(sorted_tanks.begin(), sorted_tanks.end(), [](const Tank* tank) { return !tank->active; }), sorted_tanks.end());
 
         draw_health_bars(sorted_tanks, t);
@@ -372,6 +380,92 @@ void Tmpl8::Game::insertion_sort_tanks_health(const std::vector<Tank>& original,
         }
     }
 }
+
+int Tmpl8::Game::get_median(const std::vector<const Tank*>& input, int begin, int end)
+{
+
+    if (end - begin == 2)
+    {
+        return (int)input.at(begin)->health;
+    }
+
+    const int center = (end + begin) / 2;
+    const int tank_health_at_begin = (int)input.at(begin)->health;
+    const int tank_health_at_center = (int)input.at(center)->health;
+    const int tank_health_at_end =  (int)input.at(end - 1)->health;
+
+    std::vector<int> index_values = { tank_health_at_begin, tank_health_at_center, tank_health_at_end };
+
+    // Sort the vector to get the middle value
+    for (int i = 0; i < index_values.size(); i++) {
+        for (int j = 0; j < index_values.size() - 1; j++)
+        {
+            if (index_values.at(j) > index_values.at(j + 1))
+            {
+                std::swap(index_values.at(j), index_values.at(j + 1));
+            }
+        }
+    }
+    return index_values.at(1);
+}
+
+
+
+void Tmpl8::Game::quick_sort(std::vector<const Tank*>& sorted_tanks, int begin, int end)
+{
+    if (begin < end)
+    {
+
+        if (begin == num_tanks_blue)
+        {
+            begin = 0;
+            end = end - num_tanks_blue;
+        }
+
+        //Get pivot
+        int pivot = get_median(sorted_tanks, begin, end);
+        const int* pivot_ptr = &pivot;
+
+        // Partition
+        int i = begin;
+        int j = end - 1;
+
+        while (i <= j)
+        {
+            while ((int)sorted_tanks.at(i)->health < *pivot_ptr)
+                i++;
+
+            while ((int)sorted_tanks.at(j)->health > *pivot_ptr)
+                j--;
+
+            if (i <= j)
+            {
+                std::swap(sorted_tanks.at(i), sorted_tanks.at(j));
+                i++;
+                j--;
+            }
+        }
+
+        // Recursive calls
+        quick_sort(sorted_tanks, begin, j + 1);
+        quick_sort(sorted_tanks, i, end);
+    }
+}
+
+void Tmpl8::Game::quick_sort_init(const std::vector<Tank>& tanks, std::vector<const Tank*>& sorted_tanks, int begin, int end)
+{
+
+    //Add everything from tanks to sorted tanks
+    sorted_tanks.reserve(end - begin);
+
+    // Add all tanks to sorted tanks
+    std::transform(tanks.begin() + begin, tanks.begin() + end, std::back_inserter(sorted_tanks),
+        [](const Tank& tank) { return &tank; });
+
+    //Use sorted tanks to call quick sort
+    quick_sort(sorted_tanks, begin, end);
+}
+
 
 // -----------------------------------------------------------
 // Draw the health bars based on the given tanks health values

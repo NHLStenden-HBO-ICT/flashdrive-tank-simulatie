@@ -7,6 +7,7 @@ namespace Tmpl8
     class Rocket;
     class Smoke;
     class Particle_beam;
+    class Median;
 
     class Game
     {
@@ -15,7 +16,6 @@ namespace Tmpl8
         void init();
         void shutdown();
         void update(float deltaTime);
-        void update_explosions();
         void update_particle_beams();
         void disable_rockets();
         void update_rockets();
@@ -24,21 +24,14 @@ namespace Tmpl8
         void find_most_left_tank(Tmpl8::vec2& point_on_hull);
         void find_first_active_tank(int& first_active);
 
-        void update_tanks();
-        void check_tank_collision();
-        void calculate_tank_routes();
-
         void draw();
         void tick(float deltaTime);
-        void insertion_sort_tanks_health(const std::vector<Tank>& original, std::vector<const Tank*>& sorted_tanks, int begin, int end);
-        int get_median(const std::vector<const Tank*>& input, int begin, int end);
+
         void quick_sort(std::vector<const Tank*>& sorted_tanks, int begin, int end);
         void quick_sort_init(const std::vector<Tank>& tanks, std::vector<const Tank*>& sorted_tanks, int begin, int end);
         
         void draw_health_bars(const std::vector<const Tank*>& sorted_tanks, const int team);
         void measure_performance();
-
-        Tank& find_closest_enemy(Tank& current_tank);
 
         void mouse_up(int button)
         { /* implement if you want to detect mouse button presses */

@@ -4,6 +4,9 @@
 #include "rocket.h"
 #include "explosion.h"
 #include "particle_beam.h"
+#include "median.h"
+
+
 
 constexpr auto num_tanks_blue = 2048;
 constexpr auto num_tanks_red = 2048;
@@ -19,8 +22,11 @@ constexpr auto health_bar_width = 70;
 constexpr auto max_frames = 2000;
 
 //Global performance timer
-//constexpr auto REF_PERFORMANCE = 430730; // Debug reference performance
-constexpr auto REF_PERFORMANCE = 68916; // Release reference performance
+//constexpr auto REF_PERFORMANCE = 430730; // Debug reference performance Joël
+//constexpr auto REF_PERFORMANCE = 68916; // Release reference performance Joël
+
+constexpr auto REF_PERFORMANCE = 537033; // Debug reference performance Yvonne
+//constexpr auto REF_PERFORMANCE = 132409; // Release reference performance Yvonne
 static timer perf_timer;
 static float duration;
 
@@ -274,9 +280,6 @@ void Tmpl8::Game::find_first_active_tank(int& first_active)
 }
 
 
-
-
-
 // -----------------------------------------------------------
 // Draw all sprites to the screen
 // (It is not recommended to multi-thread this function)
@@ -334,49 +337,77 @@ void Game::draw()
 
         const int begin = ((t < 1) ? 0 : num_tanks_blue);
         std::vector<const Tank*> sorted_tanks;
-        insertion_sort_tanks_health(tanks, sorted_tanks, begin, begin + NUM_TANKS);
+
+        //insertion_sort_tanks_health(tanks, sorted_tanks, begin, begin + NUM_TANKS);
+        quick_sort_init(tanks, sorted_tanks, begin, begin + NUM_TANKS);
+
         sorted_tanks.erase(std::remove_if(sorted_tanks.begin(), sorted_tanks.end(), [](const Tank* tank) { return !tank->active; }), sorted_tanks.end());
 
         draw_health_bars(sorted_tanks, t);
     }
 }
 
-// -----------------------------------------------------------
-// Sort tanks by health value using insertion sort
-// -----------------------------------------------------------
-void Tmpl8::Game::insertion_sort_tanks_health(const std::vector<Tank>& original, std::vector<const Tank*>& sorted_tanks, int begin, int end)
+
+void Tmpl8::Game::quick_sort(vector<const Tank*>& sorted_tanks, int begin, int end)
 {
-    const int NUM_TANKS = end - begin;
-    sorted_tanks.reserve(NUM_TANKS);
-    sorted_tanks.emplace_back(&original.at(begin));
-
-    for (int i = begin + 1; i < (begin + NUM_TANKS); i++)
+    if (begin < end)
     {
-        const Tank& current_tank = original.at(i);
 
-        for (int s = (int)sorted_tanks.size() - 1; s >= 0; s--)
+        if (begin == num_tanks_blue)
         {
-            const Tank* current_checking_tank = sorted_tanks.at(s);
+            begin = 0;
+            end = end - num_tanks_blue;
+        }
 
-            if ((current_checking_tank->compare_health(current_tank) <= 0))
-            {
-                sorted_tanks.insert(1 + sorted_tanks.begin() + s, &current_tank);
-                break;
-            }
+        //Get pivot
+        int pivot = Median::get_median_health(sorted_tanks, begin, end);
+        const int* pivot_ptr = &pivot;
 
-            if (s == 0)
+        // Partition
+        int i = begin;
+        int j = end - 1;
+
+        while (i <= j)
+        {
+            while ((int)sorted_tanks.at(i)->health < *pivot_ptr)
+                i++;
+
+            while ((int)sorted_tanks.at(j)->health > *pivot_ptr)
+                j--;
+
+            if (i <= j)
             {
-                sorted_tanks.insert(sorted_tanks.begin(), &current_tank);
-                break;
+                std::swap(sorted_tanks.at(i), sorted_tanks.at(j));
+                i++;
+                j--;
             }
         }
+
+        // Recursive
+        quick_sort(sorted_tanks, begin, j + 1);
+        quick_sort(sorted_tanks, i, end);
     }
 }
+
+void Tmpl8::Game::quick_sort_init(const std::vector<Tank>& tanks, vector<const Tank*>& sorted_tanks, int begin, int end)
+{
+
+    //Add everything from tanks to sorted tanks
+    sorted_tanks.reserve(end - begin);
+
+    // Add all tanks to sorted tanks
+    std::transform(tanks.begin() + begin, tanks.begin() + end, std::back_inserter(sorted_tanks),
+        [](const Tank& tank) { return &tank; });
+
+    //Use sorted tanks to call quick sort
+    quick_sort(sorted_tanks, begin, end);
+}
+
 
 // -----------------------------------------------------------
 // Draw the health bars based on the given tanks health values
 // -----------------------------------------------------------
-void Tmpl8::Game::draw_health_bars(const std::vector<const Tank*>& sorted_tanks, const int team)
+void Tmpl8::Game::draw_health_bars(const vector<const Tank*>& sorted_tanks, const int team)
 {
     int health_bar_start_x = (team < 1) ? 0 : (SCRWIDTH - HEALTHBAR_OFFSET) - 1;
     int health_bar_end_x = (team < 1) ? health_bar_width : health_bar_start_x + health_bar_width - 1;

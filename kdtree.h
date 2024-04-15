@@ -18,7 +18,6 @@ public:
         return TreeRoot;
     }
 
-    static bool tanksAreEqual(Tank* tank1, Tank* tank2);
     Tank* searchNearestTank(Tank* targetTank);
 
     void printTreeStructure(Node* root, int depth);

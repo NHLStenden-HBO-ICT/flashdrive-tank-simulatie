@@ -4,6 +4,7 @@
 
 namespace Tmpl8
 {
+
 Tank::Tank(
     float pos_x,
     float pos_y,
@@ -30,6 +31,7 @@ Tank::Tank(
       tank_sprite(tank_sprite),
       smoke_sprite(smoke_sprite)
 {
+
 }
 
 Tank::~Tank()
@@ -162,14 +164,50 @@ void Tank::check_tank_collision(vector<Tank>& tanks)
         }
     }
 }
-//
-//void Tank::check_tank_collision_with_kdtree(vector<Tank>& tanks) {
+
+void Tank::check_tank_collision_with_kdtree(vector<Tank>& tanks) {
+    vector<Tank*> tanks2;   
 //# Boom bouwen
-//
-//# Voor elke tank dichtsbijzijnde tank binnen straal zoeken
-//
-//# 
-//}
+
+    // Maak een nieuwe vector die pointers naar de Tanks bevat
+    tanks2.reserve(tanks.size()); // Reserveren om reallocation te voorkomen
+
+    // Transformeer de vector naar pointers
+    transform(tanks.begin(), tanks.end(), back_inserter(tanks2), [](Tank& tank) { return &tank; });
+
+    // Maak een const vector van pointers naar de Tanks
+    const vector<Tank*> constTanks(tanks2.begin(), tanks2.end());
+
+    // Maak een Kdtree met de const vector van pointers
+    Kdtree kdtree(constTanks);
+
+// # Voor elke tank dichtsbijzijnde tank binnen straal zoeken
+
+    Tank* nearest_tank = nullptr;
+
+    for (Tank& tank : tanks)
+    {
+        if (tank.active)
+        {
+            nearest_tank =  kdtree.searchNearestTank(&tank);
+
+
+            vec2 dir = tank.get_position() - nearest_tank -> get_position();
+            float dir_squared_len = dir.sqr_length();
+
+            float col_squared_len = (tank.get_collision_radius() + nearest_tank -> get_collision_radius());
+            col_squared_len *= col_squared_len;
+
+            if (dir_squared_len < col_squared_len)
+            {
+                tank.push(dir.normalized(), 1.f);
+            }
+        }
+    }
+
+}
+
+
 
 void Tank::update_tanks(vector<Tank>& tanks, Terrain& background_terrain, vector<Rocket>& rockets, float rocket_radius, Sprite& rocket_red, Sprite& rocket_blue)
 {

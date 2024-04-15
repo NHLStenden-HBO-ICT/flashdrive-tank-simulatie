@@ -59,9 +59,9 @@ class Tank
 
     static void calculate_tank_routes(vector<Tank>& tanks, Terrain& background_terrain, long long& frame_count);
     static void check_tank_collision(vector<Tank>& tanks);
+    static void check_tank_collision_with_kdtree(vector<Tank>& tanks);
     static Tank& find_closest_enemy(Tank& current_tank, vector<Tank>& tanks);
     static void update_tanks(vector<Tank>& tanks, Terrain& background_terrain, vector<Rocket>& rockets, float rocket_radius, Sprite& rocket_red, Sprite& rocket_blue);
-
 };
 
 } // namespace Tmpl8

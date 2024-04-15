@@ -47,14 +47,7 @@ Node* Kdtree::buildTree(const std::vector<Tank*>& tanks, int depth) {
 }
 
 
-bool Kdtree::tanksAreEqual(Tank* targetTank1, Tank* targetTank2)
-{
-    if (targetTank1->get_position().x != targetTank2 -> get_position().x || targetTank1 -> get_position().y != targetTank2 -> get_position().y) {
-        return false;
-    }
 
-    return true;
-}
 
 // Searches a Point represented by "targetPoint[]" in the K D tree.
 // The parameter depth is used to determine current axis.
@@ -90,7 +83,7 @@ Tank* Kdtree::searchNearestTank(Tank* targetTank)
 {
     double closestDistance = std::numeric_limits<double>::max();
     double maxDistance = std::numeric_limits<double>::max();
-    Tank* closestTank = nullptr;
+    Tank* closestTank = nullptr; // TODO Tank meegeven?
     // Pass current depth as 0
     return searchNearestTankRecursive(TreeRoot, *targetTank, *closestTank, 0, closestDistance);
 }

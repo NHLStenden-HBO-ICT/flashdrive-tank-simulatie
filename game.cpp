@@ -93,23 +93,7 @@ void Game::init()
     particle_beams.push_back(Particle_beam(vec2(64, 64), vec2(100, 50), &particle_beam_sprite, particle_beam_hit_value));
     particle_beams.push_back(Particle_beam(vec2(1200, 600), vec2(100, 50), &particle_beam_sprite, particle_beam_hit_value));
 
-    // BOOMPIE MAKEN
-
-
-    // Maak een nieuwe vector die pointers naar de Tanks bevat
-    tanks2.reserve(tanks.size()); // Reserveren om reallocation te voorkomen
-
-    // Transformeer de vector naar pointers
-    transform(tanks.begin(), tanks.end(), back_inserter(tanks2), [](Tank& tank) { return &tank; });
-
-    // Maak een const vector van pointers naar de Tanks
-    const vector<Tank*> constTanks(tanks2.begin(), tanks2.end());
-
-    // Maak een Kdtree met de const vector van pointers
-    Kdtree kdtree(constTanks);
-
-
-}
+ }
 
 // -----------------------------------------------------------
 // Close down application
@@ -132,7 +116,8 @@ bool Tmpl8::Game::left_of_line(vec2 line_start, vec2 line_end, vec2 point)
 void Game::update(float deltaTime)
 {
     Tank::calculate_tank_routes(tanks, background_terrain, frame_count);
-    Tank::check_tank_collision(tanks);
+    // Tank::check_tank_collision(tanks);
+    Tank::check_tank_collision_with_kdtree(tanks);
     Tank::update_tanks(tanks, background_terrain, rockets, rocket_radius, rocket_red, rocket_blue);
 
     Smoke::update(smokes);

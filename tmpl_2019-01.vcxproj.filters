@@ -16,7 +16,6 @@
     <ClCompile Include="terrain.cpp" />
     <ClCompile Include="median.cpp" />
     <ClCompile Include="kdtree.cpp" />
-    <ClCompile Include="median_tank.cpp" />
     <ClCompile Include="node.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -37,7 +36,6 @@
     <ClInclude Include="terrain.h" />
     <ClInclude Include="median.h" />
     <ClInclude Include="kdtree.h" />
-    <ClInclude Include="median_tank.h" />
     <ClInclude Include="node.h" />
   </ItemGroup>
   <ItemGroup>

@@ -123,7 +123,6 @@
     <ClCompile Include="game.cpp" />
     <ClCompile Include="kdtree.cpp" />
     <ClCompile Include="median.cpp" />
-    <ClCompile Include="median_tank.cpp" />
     <ClCompile Include="node.cpp" />
     <ClCompile Include="particle_beam.cpp" />
     <ClCompile Include="rocket.cpp" />
@@ -140,7 +139,6 @@
     <ClInclude Include="game.h" />
     <ClInclude Include="kdtree.h" />
     <ClInclude Include="median.h" />
-    <ClInclude Include="median_tank.h" />
     <ClInclude Include="node.h" />
     <ClInclude Include="particle_beam.h" />
     <ClInclude Include="precomp.h" />

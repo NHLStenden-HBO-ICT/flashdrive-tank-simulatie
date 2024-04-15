@@ -162,6 +162,14 @@ void Tank::check_tank_collision(vector<Tank>& tanks)
         }
     }
 }
+//
+//void Tank::check_tank_collision_with_kdtree(vector<Tank>& tanks) {
+//# Boom bouwen
+//
+//# Voor elke tank dichtsbijzijnde tank binnen straal zoeken
+//
+//# 
+//}
 
 void Tank::update_tanks(vector<Tank>& tanks, Terrain& background_terrain, vector<Rocket>& rockets, float rocket_radius, Sprite& rocket_red, Sprite& rocket_blue)
 {

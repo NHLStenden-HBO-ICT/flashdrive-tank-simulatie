@@ -20,6 +20,7 @@ namespace Tmpl8
 
         size_t position_x;
         size_t position_y;
+        float f;
 
         TileType tile_type;
 
@@ -35,14 +36,12 @@ namespace Tmpl8
         void update();
         void draw(Surface* target) const;
 
-        //Use Breadth-first search to find shortest route to the destination
-        vector<vec2> get_route(const Tank& tank, const vec2& target);
+        vector<vec2> get_route_dijkstra(const Tank& tank, const vec2& target);
 
         float get_speed_modifier(const vec2& position) const;
 
 
     private:
-
         bool is_accessible(int y, int x);
 
         static constexpr int sprite_size = 16;

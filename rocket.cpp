@@ -42,6 +42,7 @@ bool Rocket::intersects(vec2 position_other, float radius_other) const
     }
 }
 
+//TODO: multithread this :)
 void Rocket::update_rockets(vector<Rocket>& rockets, vector<Tank>& tanks, float rocket_hit_value, vector<Explosion>& explosions, Sprite& explosion, vector<Smoke>& smokes, Sprite& smoke)
 {
     //Update rockets

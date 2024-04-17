@@ -22,8 +22,12 @@ constexpr auto health_bar_width = 70;
 constexpr auto max_frames = 2000;
 
 //Global performance timer
-constexpr auto REF_PERFORMANCE = 430730; // Debug reference performance Jo�l
-//constexpr auto REF_PERFORMANCE = 68916; // Release reference performance Jo�l
+constexpr auto REF_PERFORMANCE = 430730; // Debug reference performance Joël
+//constexpr auto REF_PERFORMANCE = 68916; // Release reference performance Joël
+
+constexpr auto REF_PERFORMANCE = 1286380; // Debug reference performance Joël
+// constexpr auto REF_PERFORMANCE = 85912.7; // Release reference performance Joël
+
 
 //constexpr auto REF_PERFORMANCE = 537033; // Debug reference performance Yvonne
 //constexpr auto REF_PERFORMANCE = 132409; // Release reference performance Yvonne
@@ -79,6 +83,7 @@ void Game::init()
     {
         vec2 position{ start_blue_x + ((i % max_rows) * spacing), start_blue_y + ((i / max_rows) * spacing) };
         tanks.push_back(Tank(position.x, position.y, BLUE, &tank_blue, &smoke, 1100.f, position.y + 16, tank_radius, tank_max_health, tank_max_speed));
+
     }
     //Spawn red tanks
     for (int i = 0; i < num_tanks_red; i++)
@@ -90,7 +95,8 @@ void Game::init()
     particle_beams.push_back(Particle_beam(vec2(590, 327), vec2(100, 50), &particle_beam_sprite, particle_beam_hit_value));
     particle_beams.push_back(Particle_beam(vec2(64, 64), vec2(100, 50), &particle_beam_sprite, particle_beam_hit_value));
     particle_beams.push_back(Particle_beam(vec2(1200, 600), vec2(100, 50), &particle_beam_sprite, particle_beam_hit_value));
-}
+
+ }
 
 // -----------------------------------------------------------
 // Close down application
@@ -98,15 +104,11 @@ void Game::init()
 void Game::shutdown()
 {
 }
-
-
-
 //Checks if a point lies on the left of an arbitrary angled line
 bool Tmpl8::Game::left_of_line(vec2 line_start, vec2 line_end, vec2 point)
 {
     return ((line_end.x - line_start.x) * (point.y - line_start.y) - (line_end.y - line_start.y) * (point.x - line_start.x)) < 0;
 }
-
 // -----------------------------------------------------------
 // Update the game state:
 // Move all objects
@@ -117,7 +119,8 @@ bool Tmpl8::Game::left_of_line(vec2 line_start, vec2 line_end, vec2 point)
 void Game::update(float deltaTime)
 {
     Tank::calculate_tank_routes(tanks, background_terrain, frame_count);
-    Tank::check_tank_collision(tanks);
+    // Tank::check_tank_collision(tanks);
+    Tank::check_tank_collision_with_kdtree(tanks);
     Tank::update_tanks(tanks, background_terrain, rockets, rocket_radius, rocket_red, rocket_blue);
 
     Smoke::update(smokes);
@@ -148,9 +151,6 @@ void Game::update(float deltaTime)
 
 
 }
-
-
-
 void Tmpl8::Game::update_particle_beams()
 {
     //Update particle beams
@@ -171,7 +171,6 @@ void Tmpl8::Game::update_particle_beams()
         }
     }
 }
-
 void Tmpl8::Game::disable_rockets()
 {
     //Disable rockets if they collide with the "forcefield"
@@ -192,7 +191,6 @@ void Tmpl8::Game::disable_rockets()
     }
 
 }
-
 void Tmpl8::Game::update_rockets()
 {
     //Update rockets
@@ -218,7 +216,6 @@ void Tmpl8::Game::update_rockets()
         }
     }
 }
-
 void Tmpl8::Game::calculate_rockets_convex_hull(Tmpl8::vec2& point_on_hull, int first_active)
 {
     //Calculate convex hull for 'rocket barrier'
@@ -252,7 +249,6 @@ void Tmpl8::Game::calculate_rockets_convex_hull(Tmpl8::vec2& point_on_hull, int 
         }
     }
 }
-
 void Tmpl8::Game::find_most_left_tank(Tmpl8::vec2& point_on_hull)
 {
     for (Tank& tank : tanks)
@@ -266,7 +262,6 @@ void Tmpl8::Game::find_most_left_tank(Tmpl8::vec2& point_on_hull)
         }
     }
 }
-
 void Tmpl8::Game::find_first_active_tank(int& first_active)
 {
     for (Tank& tank : tanks)
@@ -278,8 +273,6 @@ void Tmpl8::Game::find_first_active_tank(int& first_active)
         first_active++;
     }
 }
-
-
 // -----------------------------------------------------------
 // Draw all sprites to the screen
 // (It is not recommended to multi-thread this function)
@@ -346,8 +339,6 @@ void Game::draw()
         draw_health_bars(sorted_tanks, t);
     }
 }
-
-
 void Tmpl8::Game::quick_sort(vector<const Tank*>& sorted_tanks, int begin, int end)
 {
     if (begin < end)
@@ -388,7 +379,6 @@ void Tmpl8::Game::quick_sort(vector<const Tank*>& sorted_tanks, int begin, int e
         quick_sort(sorted_tanks, i, end);
     }
 }
-
 void Tmpl8::Game::quick_sort_init(const std::vector<Tank>& tanks, vector<const Tank*>& sorted_tanks, int begin, int end)
 {
 
@@ -402,8 +392,6 @@ void Tmpl8::Game::quick_sort_init(const std::vector<Tank>& tanks, vector<const T
     //Use sorted tanks to call quick sort
     quick_sort(sorted_tanks, begin, end);
 }
-
-
 // -----------------------------------------------------------
 // Draw the health bars based on the given tanks health values
 // -----------------------------------------------------------
@@ -435,7 +423,6 @@ void Tmpl8::Game::draw_health_bars(const vector<const Tank*>& sorted_tanks, cons
         else { screen->bar(health_bar_start_x, health_bar_start_y, health_bar_end_x - (int)((double)health_bar_width * health_fraction), health_bar_end_y, GREENMASK); }
     }
 }
-
 // -----------------------------------------------------------
 // When we reach max_frames print the duration and speedup multiplier
 // Updating REF_PERFORMANCE at the top of this file with the value
@@ -449,6 +436,10 @@ void Tmpl8::Game::measure_performance()
         if (!lock_update)
         {
             duration = perf_timer.elapsed();
+
+            
+
+
             cout << "Duration was: " << duration << " (Replace REF_PERFORMANCE with this value)" << endl;
             lock_update = true;
         }
@@ -466,7 +457,6 @@ void Tmpl8::Game::measure_performance()
         frame_count_font->centre(screen, buffer, 340);
     }
 }
-
 // -----------------------------------------------------------
 // Main application tick function
 // -----------------------------------------------------------

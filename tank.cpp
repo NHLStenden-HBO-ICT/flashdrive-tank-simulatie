@@ -132,7 +132,6 @@ void Tank::calculate_tank_routes(vector<Tank> & tanks, Terrain& background_terra
     {
         for (Tank& t : tanks)
         {
-             //t.set_route(background_terrain.get_route_bfs(t, t.target));
             t.set_route(background_terrain.get_route_dijkstra(t, t.target));
         }
     }

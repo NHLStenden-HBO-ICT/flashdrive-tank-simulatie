@@ -126,13 +126,13 @@ void Tank::push(vec2 direction, float magnitude)
 
 void Tank::calculate_tank_routes(vector<Tank> & tanks, Terrain& background_terrain, long long& frame_count)
 {
-    //Calculate the route to the destination for each tank using BFS
+    //Calculate the route to the destination for each tank using dijkstra
     //Initializing routes here so it gets counted for performance..
     if (frame_count == 0)
     {
         for (Tank& t : tanks)
         {
-            t.set_route(background_terrain.get_route(t, t.target));
+            t.set_route(background_terrain.get_route_dijkstra(t, t.target));
         }
     }
 }

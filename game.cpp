@@ -22,10 +22,10 @@ constexpr auto health_bar_width = 70;
 constexpr auto max_frames = 2000;
 
 //Global performance timer
-//constexpr auto REF_PERFORMANCE = 430730; // Debug reference performance Joël
+constexpr auto REF_PERFORMANCE = 430730; // Debug reference performance Joël
 //constexpr auto REF_PERFORMANCE = 68916; // Release reference performance Joël
 
-constexpr auto REF_PERFORMANCE = 537033; // Debug reference performance Yvonne
+//constexpr auto REF_PERFORMANCE = 537033; // Debug reference performance Yvonne
 //constexpr auto REF_PERFORMANCE = 132409; // Release reference performance Yvonne
 static timer perf_timer;
 static float duration;

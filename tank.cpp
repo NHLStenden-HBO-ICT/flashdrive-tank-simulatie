@@ -166,22 +166,19 @@ void Tank::check_tank_collision(vector<Tank>& tanks)
 }
 
 void Tank::check_tank_collision_with_kdtree(vector<Tank>& tanks) {
-    vector<Tank*> tanks2;   
-//# Boom bouwen
+    vector<Tank*> tankPointers;   
 
     // Maak een nieuwe vector die pointers naar de Tanks bevat
-    tanks2.reserve(tanks.size()); // Reserveren om reallocation te voorkomen
+    tankPointers.reserve(tanks.size()); // Reserveren om reallocation te voorkomen
 
     // Transformeer de vector naar pointers
-    transform(tanks.begin(), tanks.end(), back_inserter(tanks2), [](Tank& tank) { return &tank; });
-
-    // Maak een const vector van pointers naar de Tanks
-    const vector<Tank*> constTanks(tanks2.begin(), tanks2.end());
+    transform(tanks.begin(), tanks.end(), back_inserter(tankPointers), [](Tank& tank) { return &tank; });
 
     // Maak een Kdtree met de const vector van pointers
-    Kdtree kdtree(constTanks);
+    Kdtree kdtree(tankPointers);
 
-// # Voor elke tank dichtsbijzijnde tank binnen straal zoeken
+
+    // # Voor elke tank dichtsbijzijnde tank binnen straal zoeken
 
     Tank* nearest_tank = nullptr;
 
@@ -191,6 +188,10 @@ void Tank::check_tank_collision_with_kdtree(vector<Tank>& tanks) {
         {
             nearest_tank =  kdtree.searchNearestTank(&tank);
 
+            if (nearest_tank == nullptr)
+			{
+				continue;
+			}
 
             vec2 dir = tank.get_position() - nearest_tank -> get_position();
             float dir_squared_len = dir.sqr_length();
@@ -206,8 +207,6 @@ void Tank::check_tank_collision_with_kdtree(vector<Tank>& tanks) {
     }
 
 }
-
-
 
 void Tank::update_tanks(vector<Tank>& tanks, Terrain& background_terrain, vector<Rocket>& rockets, float rocket_radius, Sprite& rocket_red, Sprite& rocket_blue)
 {

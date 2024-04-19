@@ -20,10 +20,9 @@ public:
 
     Tank* searchNearestTank(Tank* targetTank);
 
-    void printTreeStructure(Node* root, int depth);
-
 private:
-    Tank* searchNearestTankRecursive(Node* root, Tank& targetTank, Tank& closestTank, int depth, double& closestDistance);
+    Node* getNextNode(Node* current, const Tank* targetTank, int dimension);
+    Tank* searchNearestTankRecursive(Node* root, const Tank* targetTank, Tank* closestTank, int depth, float& closestDistance);
     static Node* buildTree(const std::vector<Tank*>& tanks, int depth);
 };
 

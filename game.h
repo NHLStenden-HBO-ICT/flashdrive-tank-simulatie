@@ -53,7 +53,6 @@ namespace Tmpl8
 
     private:
         Surface* screen;
-
         vector<Tank> tanks;
         vector<Rocket> rockets;
         vector<Smoke> smokes;

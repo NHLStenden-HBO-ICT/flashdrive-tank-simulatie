@@ -4,6 +4,7 @@
 
 namespace Tmpl8
 {
+
 Tank::Tank(
     float pos_x,
     float pos_y,
@@ -30,6 +31,7 @@ Tank::Tank(
       tank_sprite(tank_sprite),
       smoke_sprite(smoke_sprite)
 {
+
 }
 
 Tank::~Tank()
@@ -126,41 +128,58 @@ void Tank::push(vec2 direction, float magnitude)
 
 void Tank::calculate_tank_routes(vector<Tank> & tanks, Terrain& background_terrain, long long& frame_count)
 {
-    //Calculate the route to the destination for each tank using BFS
+    //Calculate the route to the destination for each tank using dijkstra
     //Initializing routes here so it gets counted for performance..
     if (frame_count == 0)
     {
         for (Tank& t : tanks)
         {
-            t.set_route(background_terrain.get_route(t, t.target));
+            t.set_route(background_terrain.get_route_dijkstra(t, t.target));
         }
     }
 }
 
-void Tank::check_tank_collision(vector<Tank>& tanks)
-{
-    //Check tank collision and nudge tanks away from each other
+void Tank::check_tank_collision_with_kdtree(vector<Tank>& tanks) {
+    vector<Tank*> tankPointers;   
+
+    // Maak een nieuwe vector die pointers naar de Tanks bevat
+    tankPointers.reserve(tanks.size()); // Reserveren om reallocation te voorkomen
+
+    // Transformeer de vector naar pointers
+    transform(tanks.begin(), tanks.end(), back_inserter(tankPointers), [](Tank& tank) { return &tank; });
+
+    // Maak een Kdtree met de const vector van pointers
+    Kdtree kdtree(tankPointers);
+
+
+    // # Voor elke tank dichtsbijzijnde tank binnen straal zoeken
+
+    Tank* nearest_tank = nullptr;
+
     for (Tank& tank : tanks)
     {
         if (tank.active)
         {
-            for (Tank& other_tank : tanks)
+            nearest_tank =  kdtree.searchNearestTank(&tank);
+
+            if (nearest_tank == nullptr)
+			{
+				continue;
+			}
+
+            vec2 dir = tank.get_position() - nearest_tank -> get_position();
+            float dir_squared_len = dir.sqr_length();
+
+            float col_squared_len = (tank.get_collision_radius() + nearest_tank -> get_collision_radius());
+            col_squared_len *= col_squared_len;
+
+            if (dir_squared_len < col_squared_len)
             {
-                if (&tank == &other_tank || !other_tank.active) continue;
-
-                vec2 dir = tank.get_position() - other_tank.get_position();
-                float dir_squared_len = dir.sqr_length();
-
-                float col_squared_len = (tank.get_collision_radius() + other_tank.get_collision_radius());
-                col_squared_len *= col_squared_len;
-
-                if (dir_squared_len < col_squared_len)
-                {
-                    tank.push(dir.normalized(), 1.f);
-                }
+                tank.push(dir.normalized(), 1.f);
             }
         }
     }
+
 }
 
 void Tank::update_tanks(vector<Tank>& tanks, Terrain& background_terrain, vector<Rocket>& rockets, float rocket_radius, Sprite& rocket_red, Sprite& rocket_blue)

@@ -1,5 +1,3 @@
-#include "precomp.h"
-
 #pragma once
 
 #ifndef ONDERZOEK_NODE_H
@@ -13,10 +11,13 @@ class Node {
 public:
     explicit Node(Tank* tank, Node* left = nullptr, Node* right = nullptr, int axis = 0);
 
+    // Geen kopieerconstructeur en toewijzingsoperator implementeren
+    Node(const Node& other) = delete;
+    Node& operator=(const Node& other) = delete;
+
     ~Node() {
         delete left;
         delete right;
-        delete tank;
     }
 
     Node* left;

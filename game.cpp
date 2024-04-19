@@ -22,10 +22,10 @@ constexpr auto health_bar_width = 70;
 constexpr auto max_frames = 2000;
 
 //Global performance timer
-constexpr auto REF_PERFORMANCE = 430730; // Debug reference performance Joël
-//constexpr auto REF_PERFORMANCE = 68916; // Release reference performance Joël
+//constexpr auto REF_PERFORMANCE = 430730; // Debug reference performance Joël
+constexpr auto REF_PERFORMANCE = 91947.5; // Release reference performance Joël
 
-constexpr auto REF_PERFORMANCE = 1286380; // Debug reference performance Joël
+//constexpr auto REF_PERFORMANCE = 1286380; // Debug reference performance Joël
 // constexpr auto REF_PERFORMANCE = 85912.7; // Release reference performance Joël
 
 
@@ -119,7 +119,7 @@ bool Tmpl8::Game::left_of_line(vec2 line_start, vec2 line_end, vec2 point)
 void Game::update(float deltaTime)
 {
     Tank::calculate_tank_routes(tanks, background_terrain, frame_count);
-    // Tank::check_tank_collision(tanks);
+    //Tank::check_tank_collision(tanks);
     Tank::check_tank_collision_with_kdtree(tanks);
     Tank::update_tanks(tanks, background_terrain, rockets, rocket_radius, rocket_red, rocket_blue);
 

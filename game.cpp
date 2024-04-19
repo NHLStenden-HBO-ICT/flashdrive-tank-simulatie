@@ -18,8 +18,8 @@ constexpr auto max_frames = 2000;
 //constexpr auto REF_PERFORMANCE = 430730; // Debug reference performance Joël
 //constexpr auto REF_PERFORMANCE = 68916; // Release reference performance Joël
 
-constexpr auto REF_PERFORMANCE = 537033; // Debug reference performance Yvonne, 1.1 speedup with quick sort
-//constexpr auto REF_PERFORMANCE = 143674; // Release reference performance Yvonne
+//constexpr auto REF_PERFORMANCE = 537033; // Debug reference performance Yvonne, 1.1 speedup with quick sort
+constexpr auto REF_PERFORMANCE = 143674; // Release reference performance Yvonne
 static timer perf_timer;
 static float duration;
 
@@ -46,7 +46,7 @@ const static vec2 rocket_size(6, 6);
 const static float tank_radius = 3.f;
 const static float rocket_radius = 5.f;
 
-static size_t num_threads = std::thread::hardware_concurrency();
+size_t num_threads = std::thread::hardware_concurrency();
 
 // -----------------------------------------------------------
 // Initialize the simulation state

@@ -25,6 +25,27 @@ namespace Tmpl8
         }
     }
 
+    void Particle_beam::update_particle_beams(vector<Particle_beam>& particle_beams, vector<Tank>& tanks, vector<Smoke>& smokes, Sprite& smoke)
+    {
+        //Update particle beams
+        for (Particle_beam& particle_beam : particle_beams)
+        {
+            particle_beam.tick(tanks);
+
+            //Damage all tanks within the damage window of the beam (the window is an axis-aligned bounding box)
+            for (Tank& tank : tanks)
+            {
+                if (tank.active && particle_beam.rectangle.intersects_circle(tank.get_position(), tank.get_collision_radius()))
+                {
+                    if (tank.hit(particle_beam.damage))
+                    {
+                        smokes.push_back(Smoke(smoke, tank.position - vec2(0, 48)));
+                    }
+                }
+            }
+        }
+    }
+
     void Particle_beam::draw(Surface* screen)
     {
         vec2 position = rectangle.min;

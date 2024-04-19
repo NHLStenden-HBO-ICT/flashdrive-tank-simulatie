@@ -1,11 +1,4 @@
 #include "precomp.h" // include (only) this in every .cpp file
-#include "smoke.h"
-#include "tank.h"
-#include "rocket.h"
-#include "explosion.h"
-#include "particle_beam.h"
-#include "median.h"
-
 
 
 constexpr auto num_tanks_blue = 2048;
@@ -25,12 +18,9 @@ constexpr auto max_frames = 2000;
 //constexpr auto REF_PERFORMANCE = 430730; // Debug reference performance Joël
 constexpr auto REF_PERFORMANCE = 91947.5; // Release reference performance Joël
 
-//constexpr auto REF_PERFORMANCE = 1286380; // Debug reference performance Joël
-// constexpr auto REF_PERFORMANCE = 85912.7; // Release reference performance Joël
+//constexpr auto REF_PERFORMANCE = 537033; // Debug reference performance Yvonne, 1.1 speedup with quick sort
+constexpr auto REF_PERFORMANCE = 143674; // Release reference performance Yvonne
 
-
-//constexpr auto REF_PERFORMANCE = 537033; // Debug reference performance Yvonne
-//constexpr auto REF_PERFORMANCE = 132409; // Release reference performance Yvonne
 static timer perf_timer;
 static float duration;
 
@@ -57,6 +47,8 @@ const static vec2 rocket_size(6, 6);
 const static float tank_radius = 3.f;
 const static float rocket_radius = 5.f;
 
+size_t num_threads = std::thread::hardware_concurrency();
+
 // -----------------------------------------------------------
 // Initialize the simulation state
 // This function does not count for the performance multiplier
@@ -64,6 +56,8 @@ const static float rocket_radius = 5.f;
 // -----------------------------------------------------------
 void Game::init()
 {
+    cout << "Number of threads is " << num_threads << "!" << endl;
+
     frame_count_font = new Font("assets/digital_small.png", "ABCDEFGHIJKLMNOPQRSTUVWXYZ:?!=-0123456789.");
 
     tanks.reserve(num_tanks_blue + num_tanks_red);
@@ -136,85 +130,21 @@ void Game::update(float deltaTime)
 
     calculate_rockets_convex_hull(point_on_hull, first_active);
 
-    update_rockets();
-    disable_rockets();
+    Rocket::update_rockets(rockets, tanks, rocket_hit_value, explosions, explosion, smokes, smoke);
+    Rocket::disable_rockets(rockets, forcefield_hull, explosions, explosion);
 
     //Remove exploded rockets with remove erase idiom
     rockets.erase(std::remove_if(rockets.begin(), rockets.end(), [](const Rocket& rocket) { return !rocket.active; }), rockets.end());
 
 
-    update_particle_beams();
+    Particle_beam::update_particle_beams(particle_beams, tanks, smokes, smoke);
     Explosion::update_explosions(explosions);
 
     explosions.erase(std::remove_if(explosions.begin(), explosions.end(), [](const Explosion& explosion) { return explosion.done(); }), explosions.end());
 
 
 }
-void Tmpl8::Game::update_particle_beams()
-{
-    //Update particle beams
-    for (Particle_beam& particle_beam : particle_beams)
-    {
-        particle_beam.tick(tanks);
 
-        //Damage all tanks within the damage window of the beam (the window is an axis-aligned bounding box)
-        for (Tank& tank : tanks)
-        {
-            if (tank.active && particle_beam.rectangle.intersects_circle(tank.get_position(), tank.get_collision_radius()))
-            {
-                if (tank.hit(particle_beam.damage))
-                {
-                    smokes.push_back(Smoke(smoke, tank.position - vec2(0, 48)));
-                }
-            }
-        }
-    }
-}
-void Tmpl8::Game::disable_rockets()
-{
-    //Disable rockets if they collide with the "forcefield"
-    //Hint: A point to convex hull intersection test might be better here? :) (Disable if outside)
-    for (Rocket& rocket : rockets)
-    {
-        if (rocket.active)
-        {
-            for (size_t i = 0; i < forcefield_hull.size(); i++)
-            {
-                if (circle_segment_intersect(forcefield_hull.at(i), forcefield_hull.at((i + 1) % forcefield_hull.size()), rocket.position, rocket.collision_radius))
-                {
-                    explosions.push_back(Explosion(&explosion, rocket.position));
-                    rocket.active = false;
-                }
-            }
-        }
-    }
-
-}
-void Tmpl8::Game::update_rockets()
-{
-    //Update rockets
-    for (Rocket& rocket : rockets)
-    {
-        rocket.tick();
-
-        //Check if rocket collides with enemy tank, spawn explosion, and if tank is destroyed spawn a smoke plume
-        for (Tank& tank : tanks)
-        {
-            if (tank.active && (tank.allignment != rocket.allignment) && rocket.intersects(tank.position, tank.collision_radius))
-            {
-                explosions.push_back(Explosion(&explosion, tank.position));
-
-                if (tank.hit(rocket_hit_value))
-                {
-                    smokes.push_back(Smoke(smoke, tank.position - vec2(7, 24)));
-                }
-
-                rocket.active = false;
-                break;
-            }
-        }
-    }
-}
 void Tmpl8::Game::calculate_rockets_convex_hull(Tmpl8::vec2& point_on_hull, int first_active)
 {
     //Calculate convex hull for 'rocket barrier'
@@ -381,14 +311,12 @@ void Tmpl8::Game::quick_sort(vector<const Tank*>& sorted_tanks, int begin, int e
 void Tmpl8::Game::quick_sort_init(const std::vector<Tank>& tanks, vector<const Tank*>& sorted_tanks, int begin, int end)
 {
 
-    //Add everything from tanks to sorted tanks
     sorted_tanks.reserve(end - begin);
 
     // Add all tanks to sorted tanks
     std::transform(tanks.begin() + begin, tanks.begin() + end, std::back_inserter(sorted_tanks),
         [](const Tank& tank) { return &tank; });
 
-    //Use sorted tanks to call quick sort
     quick_sort(sorted_tanks, begin, end);
 }
 // -----------------------------------------------------------

@@ -23,7 +23,7 @@ constexpr auto max_frames = 2000;
 
 //Global performance timer
 //constexpr auto REF_PERFORMANCE = 430730; // Debug reference performance Joël
-constexpr auto REF_PERFORMANCE = 68916; // Release reference performance Joël
+constexpr auto REF_PERFORMANCE = 91947.5; // Release reference performance Joël
 
 //constexpr auto REF_PERFORMANCE = 1286380; // Debug reference performance Joël
 // constexpr auto REF_PERFORMANCE = 85912.7; // Release reference performance Joël

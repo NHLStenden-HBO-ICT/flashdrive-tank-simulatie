@@ -119,7 +119,6 @@ bool Tmpl8::Game::left_of_line(vec2 line_start, vec2 line_end, vec2 point)
 void Game::update(float deltaTime)
 {
     Tank::calculate_tank_routes(tanks, background_terrain, frame_count);
-    //Tank::check_tank_collision(tanks);
     Tank::check_tank_collision_with_kdtree(tanks);
     Tank::update_tanks(tanks, background_terrain, rockets, rocket_radius, rocket_red, rocket_blue);
 

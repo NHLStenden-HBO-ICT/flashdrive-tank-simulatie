@@ -79,7 +79,6 @@ Tank* Kdtree::searchNearestTankRecursive(Node* root, const Tank* targetTank, Tan
             closestDistance = distance;
             closestTank = root->tank;
         }
-
     }
     
     bool nodeIsLeaf = root->left == nullptr && root->right == nullptr;
@@ -88,9 +87,6 @@ Tank* Kdtree::searchNearestTankRecursive(Node* root, const Tank* targetTank, Tan
     }
         
     Node* nextNodeToVisit = getNextNode(root, targetTank, dimension);
-
-    //Node* nextNodeToVisit = (dimension == 0) ? (targetTank -> get_position().x > root->tank->get_position().x ? root->right : root->left)
-    //    : (targetTank -> get_position().y > root->tank->get_position().y ? root->right : root->left);
 
     return searchNearestTankRecursive(nextNodeToVisit, targetTank, closestTank, depth + 1, closestDistance);
 }

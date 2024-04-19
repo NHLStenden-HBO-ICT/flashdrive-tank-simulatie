@@ -4,14 +4,16 @@
 
 namespace Tmpl8
 {
-    bool Explosion::done() const
+    const int MAX_EXPLOSION_FRAMES = 18;
+
+    bool Explosion::isDone() const
     {
-        return current_frame > 17;
+        return current_frame == MAX_EXPLOSION_FRAMES;
     }
 
     void Explosion::tick()
     {
-        if (current_frame < 18) current_frame++;
+        if (current_frame < MAX_EXPLOSION_FRAMES) current_frame++;
     }
 
     void Explosion::draw(Surface* screen)

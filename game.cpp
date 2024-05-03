@@ -46,6 +46,21 @@ const static float ROCKET_RADIUS = 5.f;
 
 size_t num_threads = std::thread::hardware_concurrency();
 
+void countUp() 
+{
+    for (int i = 1; i <= 10; ++i) {
+        std::cout << "Count up: " << i << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+}
+void countDown() 
+{
+    for (int i = 10; i >= 1; --i) {
+        std::cout << "Count down: " << i << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+}
+
 // -----------------------------------------------------------
 // Initialize the simulation state
 // This function does not count for the performance multiplier
@@ -53,6 +68,12 @@ size_t num_threads = std::thread::hardware_concurrency();
 // -----------------------------------------------------------
 void Game::init()
 {
+    Tmpl8::ThreadPool pool(num_threads);
+
+    pool.enqueue([]() { countUp(); });
+    pool.enqueue([]() { countDown(); });
+
+
     frame_count_font = new Font("assets/digital_small.png", "ABCDEFGHIJKLMNOPQRSTUVWXYZ:?!=-0123456789.");
 
     tanks.reserve(NUM_TANKS_BLUE + NUM_TANKS_RED);

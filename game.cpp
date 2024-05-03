@@ -15,7 +15,7 @@ constexpr auto MAX_FRAMES = 2000;
 
 //Global performance timer
 //constexpr auto REF_PERFORMANCE = 430730; // Debug reference performance Joël
-constexpr auto REF_PERFORMANCE = 91947.5; // Release reference performance Joël
+//constexpr auto REF_PERFORMANCE = 91947.5; // Release reference performance Joël
 
 //constexpr auto REF_PERFORMANCE = 537033; // Debug reference performance Yvonne, 1.1 speedup with quick sort
 constexpr auto REF_PERFORMANCE = 143674; // Release reference performance Yvonne
@@ -133,7 +133,7 @@ void Game::update(float deltaTime)
 
     calculate_rockets_convex_hull(point_on_hull, first_active);
 
-    Rocket::update_rockets(rockets, tanks, rocket_hit_value, explosions, explosion, smokes, smoke);
+    Rocket::update_rockets(rockets, tanks, ROCKET_HIT_VALUE, explosions, explosion, smokes, smoke);
     Rocket::disable_rockets(rockets, forcefield_hull, explosions, explosion);
 
     //Remove exploded rockets with remove erase idiom

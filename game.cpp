@@ -14,11 +14,9 @@ constexpr auto HEALTH_BAR_WIDTH = 70;
 constexpr auto MAX_FRAMES = 2000;
 
 //Global performance timer
-//constexpr auto REF_PERFORMANCE = 430730; // Debug reference performance Joël
 //constexpr auto REF_PERFORMANCE = 91947.5; // Release reference performance Joël
 
-//constexpr auto REF_PERFORMANCE = 537033; // Debug reference performance Yvonne, 1.1 speedup with quick sort
-constexpr auto REF_PERFORMANCE = 143674; // Release reference performance Yvonne
+constexpr auto REF_PERFORMANCE = 136400; // Release reference performance Yvonne, 2,2 speedup with all algorithms
 
 static timer perf_timer;
 static float duration;
@@ -55,8 +53,6 @@ size_t num_threads = std::thread::hardware_concurrency();
 // -----------------------------------------------------------
 void Game::init()
 {
-    cout << "Number of threads is " << num_threads << "!" << endl;
-
     frame_count_font = new Font("assets/digital_small.png", "ABCDEFGHIJKLMNOPQRSTUVWXYZ:?!=-0123456789.");
 
     tanks.reserve(NUM_TANKS_BLUE + NUM_TANKS_RED);

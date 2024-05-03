@@ -16,7 +16,6 @@ namespace Tmpl8
         void init();
         void shutdown();
         void update(float deltaTime);
-        void update_particle_beams();
         void calculate_rockets_convex_hull(Tmpl8::vec2& point_on_hull, int first_active);
 
         void find_most_left_tank(Tmpl8::vec2& point_on_hull);

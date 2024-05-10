@@ -68,10 +68,10 @@ void countDown()
 // -----------------------------------------------------------
 void Game::init()
 {
-    Tmpl8::ThreadPool pool(num_threads);
+    //Tmpl8::ThreadPool pool(num_threads);
 
-    pool.enqueue([]() { countUp(); });
-    pool.enqueue([]() { countDown(); });
+    //pool.enqueue([]() { countUp(); });
+    //pool.enqueue([]() { countDown(); });
 
 
     frame_count_font = new Font("assets/digital_small.png", "ABCDEFGHIJKLMNOPQRSTUVWXYZ:?!=-0123456789.");
@@ -130,6 +130,7 @@ bool Tmpl8::Game::left_of_line(vec2 line_start, vec2 line_end, vec2 point)
 // Collision detection
 // Targeting etc..
 // -----------------------------------------------------------
+static int update_count = 0;
 void Game::update(float deltaTime)
 {
     Tank::calculate_tank_routes(tanks, background_terrain, frame_count);
@@ -150,7 +151,13 @@ void Game::update(float deltaTime)
 
     calculate_rockets_convex_hull(point_on_hull, first_active);
 
-    Rocket::update_rockets(rockets, tanks, ROCKET_HIT_VALUE, explosions, explosion, smokes, smoke);
+    update_count += 1;
+    if (update_count == 1055)
+    {
+        std::cout << "stop here" << std::endl;
+    }
+
+    Rocket::update_rockets(num_threads, rockets, tanks, ROCKET_HIT_VALUE, explosions, explosion, smokes, smoke);
     Rocket::disable_rockets(rockets, forcefield_hull, explosions, explosion);
 
     //Remove exploded rockets with remove erase idiom

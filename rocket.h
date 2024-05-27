@@ -27,7 +27,7 @@ class Rocket
 
     int current_frame;
     Sprite* rocket_sprite;
-    static void update_rockets(size_t num_threads, vector<Rocket>& rockets, vector<Tank>& tanks, float rocket_hit_value, vector<Explosion>& explosions, Sprite& explosion, vector<Smoke>& smokes, Sprite& smoke);
+    static void update_rockets(ThreadPool* pool, std::vector<std::future<void>>& futures, vector<Rocket>& rockets, vector<Tank>& tanks, float rocket_hit_value, vector<Explosion>& explosions, Sprite& explosion, vector<Smoke>& smokes, Sprite& smoke);
     static void disable_rockets(vector<Rocket>& rockets, vector<vec2>& forcefield_hull, vector<Explosion> explosions, Sprite& explosion);
 
 };

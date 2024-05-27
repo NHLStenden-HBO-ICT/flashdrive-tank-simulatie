@@ -52,11 +52,13 @@ namespace Tmpl8
 
     private:
         Surface* screen;
+        ThreadPool* pool;
         vector<Tank> tanks;
-        vector<Rocket> rockets;
         vector<Smoke> smokes;
+        vector<Rocket> rockets;
         vector<Explosion> explosions;
         vector<Particle_beam> particle_beams;
+        std::vector<std::future<void>> futures;
 
         Terrain background_terrain;
         std::vector<vec2> forcefield_hull;

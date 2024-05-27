@@ -71,15 +71,21 @@ void update_rocket(Rocket& rocket, vector<Tank>& tanks, float rocket_hit_value, 
     }
 }
 
-//TODO: multithread this :)
-void Rocket::update_rockets(size_t num_threads, vector<Rocket>& rockets, vector<Tank>& tanks, float rocket_hit_value, vector<Explosion>& explosions, Sprite& explosion, vector<Smoke>& smokes, Sprite& smoke)
+// TODO: Divide the rockets evenly over the threads instead of looping through all of them first
+void Rocket::update_rockets(ThreadPool* pool, std::vector<std::future<void>>& futures, vector<Rocket>& rockets, vector<Tank>& tanks, float rocket_hit_value, vector<Explosion>& explosions, Sprite& explosion, vector<Smoke>& smokes, Sprite& smoke)
 {
-    Tmpl8::ThreadPool pool(num_threads);
-
+    futures.clear();
+    futures.reserve(rockets.size());
+   
     //Update rockets
     for (Rocket& rocket : rockets)
     {
-        pool.enqueue([&rocket, &tanks, rocket_hit_value, &explosions, &explosion, &smokes, &smoke]() { update_rocket(rocket, tanks, rocket_hit_value, explosions, explosion, smokes, smoke); });
+        futures.push_back(pool->enqueue([&rocket, &tanks, rocket_hit_value, &explosions, &explosion, &smokes, &smoke]() { update_rocket(rocket, tanks, rocket_hit_value, explosions, explosion, smokes, smoke); }));
+    }
+
+    for (auto& future : futures)
+    {
+        future.get();
     }
 }
 

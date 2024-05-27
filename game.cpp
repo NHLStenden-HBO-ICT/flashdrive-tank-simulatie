@@ -46,21 +46,6 @@ const static float ROCKET_RADIUS = 5.f;
 
 size_t num_threads = std::thread::hardware_concurrency();
 
-void countUp() 
-{
-    for (int i = 1; i <= 10; ++i) {
-        std::cout << "Count up: " << i << std::endl;
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-}
-void countDown() 
-{
-    for (int i = 10; i >= 1; --i) {
-        std::cout << "Count down: " << i << std::endl;
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-}
-
 // -----------------------------------------------------------
 // Initialize the simulation state
 // This function does not count for the performance multiplier
@@ -68,11 +53,7 @@ void countDown()
 // -----------------------------------------------------------
 void Game::init()
 {
-    //Tmpl8::ThreadPool pool(num_threads);
-
-    //pool.enqueue([]() { countUp(); });
-    //pool.enqueue([]() { countDown(); });
-
+    pool = new ThreadPool(num_threads);
 
     frame_count_font = new Font("assets/digital_small.png", "ABCDEFGHIJKLMNOPQRSTUVWXYZ:?!=-0123456789.");
 
@@ -157,7 +138,8 @@ void Game::update(float deltaTime)
         std::cout << "stop here" << std::endl;
     }
 
-    Rocket::update_rockets(num_threads, rockets, tanks, ROCKET_HIT_VALUE, explosions, explosion, smokes, smoke);
+    Rocket::update_rockets(pool, futures, rockets, tanks, ROCKET_HIT_VALUE, explosions, explosion, smokes, smoke);
+
     Rocket::disable_rockets(rockets, forcefield_hull, explosions, explosion);
 
     //Remove exploded rockets with remove erase idiom

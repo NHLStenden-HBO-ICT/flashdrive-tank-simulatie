@@ -111,7 +111,6 @@ bool Tmpl8::Game::left_of_line(vec2 line_start, vec2 line_end, vec2 point)
 // Collision detection
 // Targeting etc..
 // -----------------------------------------------------------
-static int update_count = 0;
 void Game::update(float deltaTime)
 {
     Tank::calculate_tank_routes(tanks, background_terrain, frame_count);
@@ -132,12 +131,6 @@ void Game::update(float deltaTime)
 
     calculate_rockets_convex_hull(point_on_hull, first_active);
 
-    update_count += 1;
-    if (update_count == 1055)
-    {
-        std::cout << "stop here" << std::endl;
-    }
-
     Rocket::update_rockets(pool, futures, rockets, tanks, ROCKET_HIT_VALUE, explosions, explosion, smokes, smoke);
 
     Rocket::disable_rockets(rockets, forcefield_hull, explosions, explosion);
@@ -146,7 +139,7 @@ void Game::update(float deltaTime)
     rockets.erase(std::remove_if(rockets.begin(), rockets.end(), [](const Rocket& rocket) { return !rocket.active; }), rockets.end());
 
 
-    Particle_beam::update_particle_beams(particle_beams, tanks, smokes, smoke);
+    Particle_beam::update_particle_beams(pool, futures, particle_beams, tanks, smokes, smoke);
     Explosion::update_explosions(explosions);
 
     explosions.erase(std::remove_if(explosions.begin(), explosions.end(), [](const Explosion& explosion) { return explosion.isDone(); }), explosions.end());

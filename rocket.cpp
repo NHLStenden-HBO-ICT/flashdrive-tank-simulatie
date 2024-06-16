@@ -4,8 +4,8 @@
 
 namespace Tmpl8
 {
-    std::mutex explosionsMutex;
-    std::mutex smokesMutex; 
+    std::mutex explosions_mutex;
+    std::mutex smokes_mutex; 
 
 Rocket::Rocket(vec2 position, vec2 direction, float collision_radius, allignments allignment, Sprite* rocket_sprite)
     : position(position), speed(direction), collision_radius(collision_radius), allignment(allignment), current_frame(0), rocket_sprite(rocket_sprite), active(true)
@@ -54,15 +54,15 @@ void update_rocket(Rocket& rocket, vector<Tank>& tanks, float rocket_hit_value, 
     {
         if (tank.active && (tank.allignment != rocket.allignment) && rocket.intersects(tank.position, tank.collision_radius))
         {
-            explosionsMutex.lock(); 
+            explosions_mutex.lock(); 
             explosions.push_back(Explosion(&explosion, tank.position));
-            explosionsMutex.unlock();
+            explosions_mutex.unlock();
 
             if (tank.hit(rocket_hit_value))
             {
-                smokesMutex.lock(); 
+                smokes_mutex.lock(); 
                 smokes.push_back(Smoke(smoke, tank.position - vec2(7, 24)));
-                smokesMutex.unlock();
+                smokes_mutex.unlock();
             }
 
             rocket.active = false;

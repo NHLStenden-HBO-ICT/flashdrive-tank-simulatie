@@ -139,12 +139,10 @@ void Game::update(float deltaTime)
     rockets.erase(std::remove_if(rockets.begin(), rockets.end(), [](const Rocket& rocket) { return !rocket.active; }), rockets.end());
 
 
-    Particle_beam::update_particle_beams(pool, futures, particle_beams, tanks, smokes, smoke);
+    Particle_beam::update_particle_beams(particle_beams, tanks, smokes, smoke);
     Explosion::update_explosions(explosions);
 
     explosions.erase(std::remove_if(explosions.begin(), explosions.end(), [](const Explosion& explosion) { return explosion.isDone(); }), explosions.end());
-
-
 }
 
 void Tmpl8::Game::calculate_rockets_convex_hull(Tmpl8::vec2& point_on_hull, int first_active)
@@ -365,9 +363,6 @@ void Tmpl8::Game::measure_performance()
         if (!lock_update)
         {
             duration = perf_timer.elapsed();
-
-            
-
 
             cout << "Duration was: " << duration << " (Replace REF_PERFORMANCE with this value)" << endl;
             lock_update = true;

@@ -71,7 +71,6 @@ void update_rocket(Rocket& rocket, vector<Tank>& tanks, float rocket_hit_value, 
     }
 }
 
-// TODO: Divide the rockets evenly over the threads instead of looping through all of them first
 void Rocket::update_rockets(ThreadPool* pool, std::vector<std::future<void>>& futures, vector<Rocket>& rockets, vector<Tank>& tanks, float rocket_hit_value, vector<Explosion>& explosions, Sprite& explosion, vector<Smoke>& smokes, Sprite& smoke)
 {
     futures.clear();

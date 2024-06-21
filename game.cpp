@@ -46,11 +46,10 @@ const static float ROCKET_RADIUS = 5.f;
 
 size_t num_threads = std::thread::hardware_concurrency();
 
-// -----------------------------------------------------------
-// Initialize the simulation state
-// This function does not count for the performance multiplier
-// (Feel free to optimize anyway though ;) )
-// -----------------------------------------------------------
+
+/// <summary>
+///  Initialize the simulation state
+/// </summary>
 void Game::init()
 {
     pool = new ThreadPool(num_threads);
@@ -93,13 +92,23 @@ void Game::init()
 
  }
 
-// -----------------------------------------------------------
-// Close down application
-// -----------------------------------------------------------
+
+/// <summary>
+/// Close down application
+/// </summary>
 void Game::shutdown()
 {
 }
-//Checks if a point lies on the left of an arbitrary angled line
+
+
+
+/// <summary>
+/// Checks if a point lies on the left of an arbitrary angled line
+/// </summary>
+/// <param name="line_start">Starting point of the line</param>
+/// <param name="line_end">Ending point of the line</param>
+/// <param name="point">Coordinate point</param>
+/// <returns></returns>
 bool Tmpl8::Game::left_of_line(vec2 line_start, vec2 line_end, vec2 point)
 {
     return ((line_end.x - line_start.x) * (point.y - line_start.y) - (line_end.y - line_start.y) * (point.x - line_start.x)) < 0;
@@ -111,6 +120,11 @@ bool Tmpl8::Game::left_of_line(vec2 line_start, vec2 line_end, vec2 point)
 // Collision detection
 // Targeting etc..
 // -----------------------------------------------------------
+
+/// <summary>
+/// 
+/// </summary>
+/// <param name="deltaTime">Difference in t</param>
 void Game::update(float deltaTime)
 {
     Tank::calculate_tank_routes(tanks, background_terrain, frame_count);
@@ -119,14 +133,12 @@ void Game::update(float deltaTime)
 
     Smoke::update(smokes);
 
-    //Calculate "forcefield" around active tanks
     forcefield_hull.clear();
 
-    //Find first active tank (this loop is a bit disgusting, fix?)
     int first_active = 0;
     find_first_active_tank(first_active);
     vec2 point_on_hull = tanks.at(first_active).position;
-    //Find left most tank position
+
     find_most_left_tank(point_on_hull);
 
     calculate_rockets_convex_hull(point_on_hull, first_active);
@@ -135,9 +147,7 @@ void Game::update(float deltaTime)
 
     Rocket::disable_rockets(rockets, forcefield_hull, explosions, explosion);
 
-    //Remove exploded rockets with remove erase idiom
     rockets.erase(std::remove_if(rockets.begin(), rockets.end(), [](const Rocket& rocket) { return !rocket.active; }), rockets.end());
-
 
     Particle_beam::update_particle_beams(particle_beams, tanks, smokes, smoke);
     Explosion::update_explosions(explosions);
@@ -145,17 +155,21 @@ void Game::update(float deltaTime)
     explosions.erase(std::remove_if(explosions.begin(), explosions.end(), [](const Explosion& explosion) { return explosion.isDone(); }), explosions.end());
 }
 
+
+/// <summary>
+/// Loop through all points replacing the endpoint with the current iteration every time 
+/// it lies left of the current segment formed by point_on_hull and the current endpoint.
+/// By the end we have a segment with no points on the left and thus a point on the convex hull.
+/// </summary>
+/// <param name="point_on_hull"></param>
+/// <param name="first_active"></param>
 void Tmpl8::Game::calculate_rockets_convex_hull(Tmpl8::vec2& point_on_hull, int first_active)
 {
-    //Calculate convex hull for 'rocket barrier'
     while (true)
     {
-        //Add last found point
         forcefield_hull.push_back(point_on_hull);
 
-        //Loop through all points replacing the endpoint with the current iteration every time 
-        //it lies left of the current segment formed by point_on_hull and the current endpoint.
-        //By the end we have a segment with no points on the left and thus a point on the convex hull.
+       
         vec2 endpoint = tanks.at(first_active).position;
         for (Tank& tank : tanks)
         {
@@ -168,10 +182,8 @@ void Tmpl8::Game::calculate_rockets_convex_hull(Tmpl8::vec2& point_on_hull, int 
             }
         }
 
-        //Set the starting point of the next segment to the found endpoint.
         point_on_hull = endpoint;
 
-        //If we went all the way around we are done.
         if (endpoint == forcefield_hull.at(0))
         {
             break;

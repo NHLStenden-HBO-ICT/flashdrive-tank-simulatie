@@ -53,6 +53,8 @@ size_t num_threads = std::thread::hardware_concurrency();
 // -----------------------------------------------------------
 void Game::init()
 {
+    pool = new ThreadPool(num_threads);
+
     frame_count_font = new Font("assets/digital_small.png", "ABCDEFGHIJKLMNOPQRSTUVWXYZ:?!=-0123456789.");
 
     tanks.reserve(NUM_TANKS_BLUE + NUM_TANKS_RED);
@@ -129,7 +131,8 @@ void Game::update(float deltaTime)
 
     calculate_rockets_convex_hull(point_on_hull, first_active);
 
-    Rocket::update_rockets(rockets, tanks, ROCKET_HIT_VALUE, explosions, explosion, smokes, smoke);
+    Rocket::update_rockets(pool, futures, rockets, tanks, ROCKET_HIT_VALUE, explosions, explosion, smokes, smoke);
+
     Rocket::disable_rockets(rockets, forcefield_hull, explosions, explosion);
 
     //Remove exploded rockets with remove erase idiom
@@ -140,8 +143,6 @@ void Game::update(float deltaTime)
     Explosion::update_explosions(explosions);
 
     explosions.erase(std::remove_if(explosions.begin(), explosions.end(), [](const Explosion& explosion) { return explosion.isDone(); }), explosions.end());
-
-
 }
 
 void Tmpl8::Game::calculate_rockets_convex_hull(Tmpl8::vec2& point_on_hull, int first_active)
@@ -362,9 +363,6 @@ void Tmpl8::Game::measure_performance()
         if (!lock_update)
         {
             duration = perf_timer.elapsed();
-
-            
-
 
             cout << "Duration was: " << duration << " (Replace REF_PERFORMANCE with this value)" << endl;
             lock_update = true;

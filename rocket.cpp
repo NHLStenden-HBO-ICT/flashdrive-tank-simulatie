@@ -4,6 +4,9 @@
 
 namespace Tmpl8
 {
+    std::mutex explosions_mutex;
+    std::mutex smokes_mutex; 
+
 Rocket::Rocket(vec2 position, vec2 direction, float collision_radius, allignments allignment, Sprite* rocket_sprite)
     : position(position), speed(direction), collision_radius(collision_radius), allignment(allignment), current_frame(0), rocket_sprite(rocket_sprite), active(true)
 {
@@ -42,30 +45,46 @@ bool Rocket::intersects(vec2 position_other, float radius_other) const
     }
 }
 
-//TODO: multithread this :)
-void Rocket::update_rockets(vector<Rocket>& rockets, vector<Tank>& tanks, float rocket_hit_value, vector<Explosion>& explosions, Sprite& explosion, vector<Smoke>& smokes, Sprite& smoke)
+void update_rocket(Rocket& rocket, vector<Tank>& tanks, float rocket_hit_value, vector<Explosion>& explosions, Sprite& explosion, vector<Smoke>& smokes, Sprite& smoke)
 {
+    rocket.tick();
+
+    //Check if rocket collides with enemy tank, spawn explosion, and if tank is destroyed spawn a smoke plume
+    for (Tank& tank : tanks)
+    {
+        if (tank.active && (tank.allignment != rocket.allignment) && rocket.intersects(tank.position, tank.collision_radius))
+        {
+            explosions_mutex.lock(); 
+            explosions.push_back(Explosion(&explosion, tank.position));
+            explosions_mutex.unlock();
+
+            if (tank.hit(rocket_hit_value))
+            {
+                smokes_mutex.lock(); 
+                smokes.push_back(Smoke(smoke, tank.position - vec2(7, 24)));
+                smokes_mutex.unlock();
+            }
+
+            rocket.active = false;
+            break;
+        }
+    }
+}
+
+void Rocket::update_rockets(ThreadPool* pool, std::vector<std::future<void>>& futures, vector<Rocket>& rockets, vector<Tank>& tanks, float rocket_hit_value, vector<Explosion>& explosions, Sprite& explosion, vector<Smoke>& smokes, Sprite& smoke)
+{
+    futures.clear();
+    futures.reserve(rockets.size());
+   
     //Update rockets
     for (Rocket& rocket : rockets)
     {
-        rocket.tick();
+        futures.push_back(pool->enqueue([&rocket, &tanks, rocket_hit_value, &explosions, &explosion, &smokes, &smoke]() { update_rocket(rocket, tanks, rocket_hit_value, explosions, explosion, smokes, smoke); }));
+    }
 
-        //Check if rocket collides with enemy tank, spawn explosion, and if tank is destroyed spawn a smoke plume
-        for (Tank& tank : tanks)
-        {
-            if (tank.active && (tank.allignment != rocket.allignment) && rocket.intersects(tank.position, tank.collision_radius))
-            {
-                explosions.push_back(Explosion(&explosion, tank.position));
-
-                if (tank.hit(rocket_hit_value))
-                {
-                    smokes.push_back(Smoke(smoke, tank.position - vec2(7, 24)));
-                }
-
-                rocket.active = false;
-                break;
-            }
-        }
+    for (auto& future : futures)
+    {
+        future.get();
     }
 }
 

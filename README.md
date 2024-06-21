@@ -1,36 +1,15 @@
 # FlashDrive - Optimalisatie Project
 
-Dit document beschrijft de projectopdracht voor periode 2 van jaar 2. 
+Project FlashDrive is een geoptimaliseerde versie van een bestaande tank simulatie.
 
-## Overzicht
+•	De codebase is gereorganiseerd door functies te splitsen en ze te groeperen per bijbehorende klassen, wat de structuur overzichtelijker maakt.
+•	Via een C++ profiler zijn de meest tijdrovende functies geïdentificeerd tijdens simulaties van 2000 frames.
+•	Optimalisatiemogelijkheden zijn onderzocht op basis van de huidige algoritmen. Hierbij is alleen gekeken naar de tijdcomplexiteit, met de nadruk op het verbeteren van de efficiëntie. 
 
-Dit project, genaamd "FlashDrive", omvat het iteratief optimaliseren van een gevechtssimulatie tussen (tank)eenheden, gericht op het analyseren van gevechtsscenario's. Het primaire doel is het verkrijgen van een snel draaiende simulatie, wat essentieel is voor het tijdig ontwikkelen van nieuwe aanvalsstrategieën.
+•	Voor een snellere collision detection tussen tanks is een Kd-tree geïmplementeerd, waardoor het zoekproces van voor elke tank elke andere tank controleren ( O(n^2) ) naar gemiddeld O(log n) is verbeterd. Dit komt doordat tanks efficiënter worden georganiseerd in de boomstructuur.
+•	Dijkstra's algoritme is ingezet voor het bepalen van snelste routes in een grid met obstakels, waarbij de tijdcomplexiteit van O((V+E) log V) is toegepast. Hierbij staat V voor het aantal knooppunten (celposities) en E voor de randen (mogelijke bewegingen) in het grid. Dit vervangt het BFS-algoritme met een complexiteit van O(N×M), waarbij N en M de dimensies van het grid zijn.
+•	Het sorteren van healthbars is geüpgraded van Insertion Sort (O(n^2)) naar Quick Sort (O(n log n)), waarbij QuickSort efficiënt werkt door de array te verdelen en te sorteren rond gekozen pivot elementen.
 
-## Doelstellingen
+•	Het multithreaden van het updaten van rockets heeft een significante snelheidsverbetering opgeleverd, met een gemiddelde speedup van 3,3 na alle verbeteringen. Aanvankelijk was de speedup 1,0 en na de algoritmische verbeteringen steeg deze naar 2,2.
+•	Ondanks dat het multithreaden van het updaten van tanks geen snelheidsvoordeel bood, is de code behouden voor toekomstige evaluaties.
 
-- Verbetering van de bestaande codebase, van hoog naar laag niveau (algoritmen tot concurrent programmeren).
-- Identificeren van bottlenecks en toepassen van optimalisaties, zonder functionaliteitsverandering.
-- Iteratief werk met focus op onderdelen met de grootste impact op prestaties.
-
-## Structuur van Werk
-
-1. Identificatie van bottlenecks.
-2. Toepassing van high-level optimalisaties om algoritmische tijdscomplexiteit te verbeteren.
-3. Herbeoordeling van bottlenecks.
-4. Implementatie van parallelle programmeertechnieken, indien van toepassing.
-5. Herhaling van stappen totdat de tijd op is.
-
-## Teams & Beperkingen
-
-- Projectuitvoering individueel of met één partner.
-- Gebruik van meegeleverde threadpool toegestaan; vermijden van threading libraries zoals OpenMP en TBB.
-
-## Resultaat en Deadline
-
-- In te leveren: Geoptimaliseerde code, projectbestanden (opgeruimd), verslag met optimalisatie iteraties.
-- Deadline: 19 januari 23:59.
-
-## Beoordeling
-
-De beoordeling omvat vakken Algoritmiek, Concurrent programmeren, en Object georiënteerd programmeren in C++.
-Raadpleeg de beoordelingsmodellen op blackboard voor meer details.

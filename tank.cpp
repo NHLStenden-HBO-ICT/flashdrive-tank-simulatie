@@ -1,6 +1,4 @@
 #include "precomp.h"
-#include "tank.h"
-
 
 namespace Tmpl8
 {
@@ -38,6 +36,10 @@ Tank::~Tank()
 {
 }
 
+/// <summary>
+/// Update tanks every tick
+/// </summary>
+/// <param name="terrain">Terrain of the game</param>
 void Tank::tick(Terrain& terrain)
 {
     vec2 direction = vec2(0, 0);
@@ -47,11 +49,10 @@ void Tank::tick(Terrain& terrain)
         direction = (target - position).normalized();
     }
 
-    //Update using accumulated force
     speed = direction + force;
-    position += speed * max_speed * 0.5f;
+    float position_multiplier = 0.5f;
+    position += speed * max_speed * position_multiplier;
 
-    //Update reload time
     if (--reload_time <= 0.0f)
     {
         reloaded = true;
@@ -59,7 +60,9 @@ void Tank::tick(Terrain& terrain)
 
     force = vec2(0.f, 0.f);
 
-    if (++current_frame > 8) current_frame = 0;
+    int number_of_animation_frames = 8;
+    int start_frame = 0;
+    if (++current_frame > number_of_animation_frames) current_frame = start_frame;
 
     //Target reached?
     if (current_route.size() > 0)
@@ -72,6 +75,10 @@ void Tank::tick(Terrain& terrain)
     }
 }
 
+/// <summary>
+/// Set the route of current tank
+/// </summary>
+/// <param name="route">The route the tank is following</param>
 void Tank::set_route(const std::vector<vec2>& route)
 {
     if (route.size() > 0)
@@ -86,19 +93,28 @@ void Tank::set_route(const std::vector<vec2>& route)
     }
 }
 
-//Start reloading timer
+/// <summary>
+/// Start reloading timer
+/// </summary>
 void Tank::reload_rocket()
 {
     reloaded = false;
     reload_time = 200.0f;
 }
 
+/// <summary>
+/// Deactivate the tank
+/// </summary>
 void Tank::deactivate()
 {
     active = false;
 }
 
-//Remove health
+/// <summary>
+/// Remove health
+/// </summary>
+/// <param name="hit_value">The amount of health to be removed</param>
+/// <returns>Has the tank run out of health?</returns>
 bool Tank::hit(int hit_value)
 {
     health -= hit_value;
@@ -112,7 +128,10 @@ bool Tank::hit(int hit_value)
     return false;
 }
 
-//Draw the sprite with the facing based on this tanks movement direction
+/// <summary>
+/// Draw the sprite with the facing based on this tanks movement direction
+/// </summary>
+/// <param name="screen">The game screen</param>
 void Tank::draw(Surface* screen)
 {
     vec2 direction = (target - position).normalized();
@@ -120,16 +139,25 @@ void Tank::draw(Surface* screen)
     tank_sprite->draw(screen, (int)position.x - 7 + HEALTHBAR_OFFSET, (int)position.y - 9);
 }
 
-//Add some force in a given direction
+/// <summary>
+/// Add some force in a given direction
+/// </summary>
+/// <param name="direction">The direction to push towards</param>
+/// <param name="magnitude">How strongly to push</param>
 void Tank::push(vec2 direction, float magnitude)
 {
     force += direction * magnitude;
 }
 
+
+/// <summary>
+/// Calculate the route to the destination for each tank using dijkstra
+/// </summary>
+/// <param name="tanks"></param>
+/// <param name="background_terrain"></param>
+/// <param name="frame_count"></param>
 void Tank::calculate_tank_routes(vector<Tank> & tanks, Terrain& background_terrain, long long& frame_count)
 {
-    //Calculate the route to the destination for each tank using dijkstra
-    //Initializing routes here so it gets counted for performance..
     if (frame_count == 0)
     {
         for (Tank& t : tanks)
@@ -139,20 +167,18 @@ void Tank::calculate_tank_routes(vector<Tank> & tanks, Terrain& background_terra
     }
 }
 
+/// <summary>
+/// Check if the tank collides with another
+/// </summary>
+/// <param name="tanks">The tank to check collision for</param>
 void Tank::check_tank_collision_with_kdtree(vector<Tank>& tanks) {
     vector<Tank*> tankPointers;   
 
-    // Maak een nieuwe vector die pointers naar de Tanks bevat
-    tankPointers.reserve(tanks.size()); // Reserveren om reallocation te voorkomen
+    tankPointers.reserve(tanks.size());
 
-    // Transformeer de vector naar pointers
     transform(tanks.begin(), tanks.end(), back_inserter(tankPointers), [](Tank& tank) { return &tank; });
 
-    // Maak een Kdtree met de const vector van pointers
     Kdtree kdtree(tankPointers);
-
-
-    // # Voor elke tank dichtsbijzijnde tank binnen straal zoeken
 
     Tank* nearest_tank = nullptr;
 
@@ -179,20 +205,25 @@ void Tank::check_tank_collision_with_kdtree(vector<Tank>& tanks) {
             }
         }
     }
-
 }
 
+/// <summary>
+/// Update the tanks
+/// </summary>
+/// <param name="tanks">List of tanks</param>
+/// <param name="background_terrain">Terrain on the screen</param>
+/// <param name="rockets">The rockets fired by tanks</param>
+/// <param name="rocket_radius">The radius of a rocket</param>
+/// <param name="rocket_red">Sprite for a red rocket</param>
+/// <param name="rocket_blue">Sprite for a blue rocket</param>
 void Tank::update_tanks(vector<Tank>& tanks, Terrain& background_terrain, vector<Rocket>& rockets, float rocket_radius, Sprite& rocket_red, Sprite& rocket_blue)
 {
-    //Update tanks
     for (Tank& tank : tanks)
     {
         if (tank.active)
         {
-            //Move tanks according to speed and nudges (see above) also reload
             tank.tick(background_terrain);
 
-            //Shoot at closest target if reloaded
             if (tank.rocket_reloaded())
             {
                 Tank& target = Tank::find_closest_enemy(tank, tanks);
@@ -205,9 +236,12 @@ void Tank::update_tanks(vector<Tank>& tanks, Terrain& background_terrain, vector
     }
 }
 
-// -----------------------------------------------------------
-// Iterates through all tanks and returns the closest enemy tank for the given tank
-// -----------------------------------------------------------
+/// <summary>
+/// Find the closest enemy
+/// </summary>
+/// <param name="current_tank">The tank to check</param>
+/// <param name="tanks">List of tanks</param>
+/// <returns>The closest enemy</returns>
 Tank& Tank::find_closest_enemy(Tank& current_tank, vector<Tank>& tanks)
 {
     float closest_distance = numeric_limits<float>::infinity();

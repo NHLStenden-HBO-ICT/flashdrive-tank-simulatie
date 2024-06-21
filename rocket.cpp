@@ -1,6 +1,4 @@
 #include "precomp.h"
-#include "rocket.h"
-
 
 namespace Tmpl8
 {
@@ -22,17 +20,25 @@ void Rocket::tick()
     if (++current_frame > 8) current_frame = 0;
 }
 
-//Draw the sprite with the facing based on this rockets movement direction
+/// <summary>
+/// Draw rocket sprites
+/// </summary>
+/// <param name="screen">The display screen</param>
 void Rocket::draw(Surface* screen)
 {
     rocket_sprite->set_frame(((abs(speed.x) > abs(speed.y)) ? ((speed.x < 0) ? 3 : 0) : ((speed.y < 0) ? 9 : 6)) + (current_frame / 3));
     rocket_sprite->draw(screen, (int)position.x - 12 + HEALTHBAR_OFFSET, (int)position.y - 12);
 }
 
-//Does the given circle collide with this rockets collision circle?
+
+/// <summary>
+/// Does the given circle collide with this rockets collision circle ?
+/// </summary>
+/// <param name="position_other">Position of the other object</param>
+/// <param name="radius_other">The radius of the other object</param>
+/// <returns></returns>
 bool Rocket::intersects(vec2 position_other, float radius_other) const
 {
-    //Note: Uses squared lengths to remove expensive square roots
     float distance_sqr = (position_other - position).sqr_length();
 
     if (distance_sqr <= ((collision_radius + radius_other) * (collision_radius + radius_other)))
@@ -45,11 +51,20 @@ bool Rocket::intersects(vec2 position_other, float radius_other) const
     }
 }
 
+/// <summary>
+///Check if rocket collides with enemy tank, spawn explosion, and if tank is destroyed spawn a smoke plume
+/// </summary>
+/// <param name="rocket"></param>
+/// <param name="tanks"></param>
+/// <param name="rocket_hit_value"></param>
+/// <param name="explosions"></param>
+/// <param name="explosion"></param>
+/// <param name="smokes"></param>
+/// <param name="smoke"></param>
 void update_rocket(Rocket& rocket, vector<Tank>& tanks, float rocket_hit_value, vector<Explosion>& explosions, Sprite& explosion, vector<Smoke>& smokes, Sprite& smoke)
 {
     rocket.tick();
 
-    //Check if rocket collides with enemy tank, spawn explosion, and if tank is destroyed spawn a smoke plume
     for (Tank& tank : tanks)
     {
         if (tank.active && (tank.allignment != rocket.allignment) && rocket.intersects(tank.position, tank.collision_radius))
@@ -71,12 +86,23 @@ void update_rocket(Rocket& rocket, vector<Tank>& tanks, float rocket_hit_value, 
     }
 }
 
+/// <summary>
+/// Multithreaded queue to update rockets 
+/// </summary>
+/// <param name="pool">Thread pool</param>
+/// <param name="futures">The threads to wait for</param>
+/// <param name="rockets">List of rockets</param>
+/// <param name="tanks">List of tanks</param>
+/// <param name="rocket_hit_value">How much the the tank is damaged</param>
+/// <param name="explosions">List of explosions</param>
+/// <param name="explosion">Explosions sprite</param>
+/// <param name="smokes">List of smokes</param>
+/// <param name="smoke">Smoke sprite</param>
 void Rocket::update_rockets(ThreadPool* pool, std::vector<std::future<void>>& futures, vector<Rocket>& rockets, vector<Tank>& tanks, float rocket_hit_value, vector<Explosion>& explosions, Sprite& explosion, vector<Smoke>& smokes, Sprite& smoke)
 {
     futures.clear();
     futures.reserve(rockets.size());
    
-    //Update rockets
     for (Rocket& rocket : rockets)
     {
         futures.push_back(pool->enqueue([&rocket, &tanks, rocket_hit_value, &explosions, &explosion, &smokes, &smoke]() { update_rocket(rocket, tanks, rocket_hit_value, explosions, explosion, smokes, smoke); }));
@@ -88,10 +114,15 @@ void Rocket::update_rockets(ThreadPool* pool, std::vector<std::future<void>>& fu
     }
 }
 
+/// <summary>
+/// Disable rockets if they collide with the "forcefield"
+/// </summary>
+/// <param name="rockets"></param>
+/// <param name="forcefield_hull"></param>
+/// <param name="explosions"></param>
+/// <param name="explosion"></param>
 void Rocket::disable_rockets(vector<Rocket>& rockets, vector<vec2>& forcefield_hull, vector<Explosion> explosions, Sprite& explosion)
 {
-    //Disable rockets if they collide with the "forcefield"
-    //Hint: A point to convex hull intersection test might be better here? :) (Disable if outside)
     for (Rocket& rocket : rockets)
     {
         if (rocket.active)
@@ -106,7 +137,5 @@ void Rocket::disable_rockets(vector<Rocket>& rockets, vector<vec2>& forcefield_h
             }
         }
     }
-
 }
-
 } // namespace Tmpl8

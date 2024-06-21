@@ -1,5 +1,4 @@
 #include "precomp.h"
-#include "particle_beam.h"
 
 namespace Tmpl8
 {
@@ -25,14 +24,20 @@ namespace Tmpl8
         }
     }
 
+    /// <summary>
+    /// //Update particle beams
+    /// </summary>
+    /// <param name="particle_beams">List of particle beams</param>
+    /// <param name="tanks">List of tanks</param>
+    /// <param name="smokes">List of smokes</param>
+    /// <param name="smoke">Smoke sprite</param>
     void Particle_beam::update_particle_beams(vector<Particle_beam>& particle_beams, vector<Tank>& tanks, vector<Smoke>& smokes, Sprite& smoke)
     {
-        //Update particle beams
+        
         for (Particle_beam& particle_beam : particle_beams)
         {
             particle_beam.tick(tanks);
 
-            //Damage all tanks within the damage window of the beam (the window is an axis-aligned bounding box)
             for (Tank& tank : tanks)
             {
                 if (tank.active && particle_beam.rectangle.intersects_circle(tank.get_position(), tank.get_collision_radius()))

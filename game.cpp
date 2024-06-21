@@ -100,8 +100,6 @@ void Game::shutdown()
 {
 }
 
-
-
 /// <summary>
 /// Checks if a point lies on the left of an arbitrary angled line
 /// </summary>
@@ -122,10 +120,9 @@ bool Tmpl8::Game::left_of_line(vec2 line_start, vec2 line_end, vec2 point)
 // -----------------------------------------------------------
 
 /// <summary>
-/// 
+/// Update the game state by moving al objects, collision detection and update sprites
 /// </summary>
-/// <param name="deltaTime">Difference in t</param>
-void Game::update(float deltaTime)
+void Game::update()
 {
     Tank::calculate_tank_routes(tanks, background_terrain, frame_count);
     Tank::check_tank_collision_with_kdtree(tanks);
@@ -161,16 +158,16 @@ void Game::update(float deltaTime)
 /// it lies left of the current segment formed by point_on_hull and the current endpoint.
 /// By the end we have a segment with no points on the left and thus a point on the convex hull.
 /// </summary>
-/// <param name="point_on_hull"></param>
-/// <param name="first_active"></param>
+/// <param name="point_on_hull">The point on the convex hull to check</param>
+/// <param name="first_active">First active rocket that is found</param>
 void Tmpl8::Game::calculate_rockets_convex_hull(Tmpl8::vec2& point_on_hull, int first_active)
 {
     while (true)
     {
         forcefield_hull.push_back(point_on_hull);
-
        
         vec2 endpoint = tanks.at(first_active).position;
+
         for (Tank& tank : tanks)
         {
             if (tank.active)
@@ -190,19 +187,26 @@ void Tmpl8::Game::calculate_rockets_convex_hull(Tmpl8::vec2& point_on_hull, int 
         }
     }
 }
+
+/// <summary>
+/// Find the tank that is most left from point of the convex hull
+/// </summary>
+/// <param name="point_on_hull">The point where to check from</param>
 void Tmpl8::Game::find_most_left_tank(Tmpl8::vec2& point_on_hull)
 {
     for (Tank& tank : tanks)
     {
-        if (tank.active)
+        if (tank.active && tank.position.x <= point_on_hull.x)
         {
-            if (tank.position.x <= point_on_hull.x)
-            {
-                point_on_hull = tank.position;
-            }
+            point_on_hull = tank.position;
         }
     }
 }
+
+/// <summary>
+/// Find the first active tank
+/// </summary>
+/// <param name="first_active">The current first active tank</param>
 void Tmpl8::Game::find_first_active_tank(int& first_active)
 {
     for (Tank& tank : tanks)
@@ -211,22 +215,20 @@ void Tmpl8::Game::find_first_active_tank(int& first_active)
         {
             break;
         }
+
         first_active++;
     }
 }
-// -----------------------------------------------------------
-// Draw all sprites to the screen
-// (It is not recommended to multi-thread this function)
-// -----------------------------------------------------------
+
+/// <summary>
+/// Draw all sprites to the screen 
+/// </summary>
 void Game::draw()
 {
-    // clear the graphics window
     screen->clear(0);
 
-    //Draw background
     background_terrain.draw(screen);
 
-    //Draw sprites
     for (int i = 0; i < NUM_TANKS_BLUE + NUM_TANKS_RED; i++)
     {
         tanks.at(i).draw(screen);
@@ -254,7 +256,7 @@ void Game::draw()
         explosion.draw(screen);
     }
 
-    //Draw forcefield (mostly for debugging, its kinda ugly..)
+    // Draw forcefield
     for (size_t i = 0; i < forcefield_hull.size(); i++)
     {
         vec2 line_start = forcefield_hull.at(i);
@@ -264,7 +266,7 @@ void Game::draw()
         screen->line(line_start, line_end, 0x0000ff);
     }
 
-    //Draw sorted health bars
+    // Draw sorted health bars for blue and red team
     for (int t = 0; t < 2; t++)
     {
         const int NUM_TANKS = ((t < 1) ? NUM_TANKS_BLUE : NUM_TANKS_RED);
@@ -272,7 +274,6 @@ void Game::draw()
         const int begin = ((t < 1) ? 0 : NUM_TANKS_BLUE);
         std::vector<const Tank*> sorted_tanks;
 
-        //insertion_sort_tanks_health(tanks, sorted_tanks, begin, begin + NUM_TANKS);
         quick_sort_init(tanks, sorted_tanks, begin, begin + NUM_TANKS);
 
         sorted_tanks.erase(std::remove_if(sorted_tanks.begin(), sorted_tanks.end(), [](const Tank* tank) { return !tank->active; }), sorted_tanks.end());
@@ -280,6 +281,13 @@ void Game::draw()
         draw_health_bars(sorted_tanks, t);
     }
 }
+
+/// <summary>
+/// Quick sort healthbar values
+/// </summary>
+/// <param name="sorted_tanks">The list of already sorted tanks</param>
+/// <param name="begin">Start position to sort</param>
+/// <param name="end">End position to sort</param>
 void Tmpl8::Game::quick_sort(vector<const Tank*>& sorted_tanks, int begin, int end)
 {
     if (begin < end)
@@ -295,7 +303,6 @@ void Tmpl8::Game::quick_sort(vector<const Tank*>& sorted_tanks, int begin, int e
         int pivot = Median::get_median_health(sorted_tanks, begin, end);
         const int* pivot_ptr = &pivot;
 
-        // Partition
         int i = begin;
         int j = end - 1;
 
@@ -315,46 +322,53 @@ void Tmpl8::Game::quick_sort(vector<const Tank*>& sorted_tanks, int begin, int e
             }
         }
 
-        // Recursive
         quick_sort(sorted_tanks, begin, j + 1);
         quick_sort(sorted_tanks, i, end);
     }
 }
+
+/// <summary>
+/// Quick sort initializer 
+/// </summary>
+/// <param name="tanks">List of tanks to sort</param>
+/// <param name="sorted_tanks">List to put sorted tanks into</param>
+/// <param name="begin">Start position</param>
+/// <param name="end">End position</param>
 void Tmpl8::Game::quick_sort_init(const std::vector<Tank>& tanks, vector<const Tank*>& sorted_tanks, int begin, int end)
 {
-
     sorted_tanks.reserve(end - begin);
 
-    // Add all tanks to sorted tanks
     std::transform(tanks.begin() + begin, tanks.begin() + end, std::back_inserter(sorted_tanks),
         [](const Tank& tank) { return &tank; });
 
     quick_sort(sorted_tanks, begin, end);
 }
-// -----------------------------------------------------------
-// Draw the health bars based on the given tanks health values
-// -----------------------------------------------------------
+
+/// <summary>
+/// Draw the health bars based on the given tanks health values
+/// </summary>
+/// <param name="sorted_tanks">List of sorted tanks</param>
+/// <param name="team">Team number to represent red (1) or blue (0)</param>
 void Tmpl8::Game::draw_health_bars(const vector<const Tank*>& sorted_tanks, const int team)
 {
+    int healthbar_height = 1;
     int health_bar_start_x = (team < 1) ? 0 : (SCRWIDTH - HEALTHBAR_OFFSET) - 1;
     int health_bar_end_x = (team < 1) ? HEALTH_BAR_WIDTH : health_bar_start_x + HEALTH_BAR_WIDTH - 1;
 
     for (int i = 0; i < SCRHEIGHT - 1; i++)
     {
-        //Health bars are 1 pixel each
-        int health_bar_start_y = i * 1;
-        int health_bar_end_y = health_bar_start_y + 1;
+        int health_bar_start_y = i * healthbar_height;
+        int health_bar_end_y = health_bar_start_y + healthbar_height;
 
         screen->bar(health_bar_start_x, health_bar_start_y, health_bar_end_x, health_bar_end_y, REDMASK);
     }
 
-    //Draw the <SCRHEIGHT> least healthy tank health bars
     int draw_count = std::min(SCRHEIGHT, (int)sorted_tanks.size());
-    for (int i = 0; i < draw_count - 1; i++)
+    for (int i = 0; i < draw_count - healthbar_height; i++)
     {
-        //Health bars are 1 pixel each
-        int health_bar_start_y = i * 1;
-        int health_bar_end_y = health_bar_start_y + 1;
+
+        int health_bar_start_y = i * healthbar_height;
+        int health_bar_end_y = health_bar_start_y + healthbar_height;
 
         float health_fraction = (1 - ((double)sorted_tanks.at(i)->health / (double)TANK_MAX_HEALTH));
 
@@ -362,11 +376,10 @@ void Tmpl8::Game::draw_health_bars(const vector<const Tank*>& sorted_tanks, cons
         else { screen->bar(health_bar_start_x, health_bar_start_y, health_bar_end_x - (int)((double)HEALTH_BAR_WIDTH * health_fraction), health_bar_end_y, GREENMASK); }
     }
 }
-// -----------------------------------------------------------
-// When we reach max_frames print the duration and speedup multiplier
-// Updating REF_PERFORMANCE at the top of this file with the value
-// on your machine gives you an idea of the speedup your optimizations give
-// -----------------------------------------------------------
+
+/// <summary>
+/// When we reach max_frames print the duration and speedup multiplier 
+/// </summary>
 void Tmpl8::Game::measure_performance()
 {
     char buffer[128];
@@ -393,14 +406,15 @@ void Tmpl8::Game::measure_performance()
         frame_count_font->centre(screen, buffer, 340);
     }
 }
-// -----------------------------------------------------------
-// Main application tick function
-// -----------------------------------------------------------
-void Game::tick(float deltaTime)
+
+/// <summary>
+/// Every tick the game updates
+/// </summary>
+void Game::tick()
 {
     if (!lock_update)
     {
-        update(deltaTime);
+        update();
     }
     draw();
 

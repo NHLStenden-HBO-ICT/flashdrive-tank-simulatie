@@ -15,14 +15,14 @@ namespace Tmpl8
         void set_target(Surface* surface) { screen = surface; }
         void init();
         void shutdown();
-        void update(float deltaTime);
+        void update();
         void calculate_rockets_convex_hull(Tmpl8::vec2& point_on_hull, int first_active);
 
         void find_most_left_tank(Tmpl8::vec2& point_on_hull);
         void find_first_active_tank(int& first_active);
 
         void draw();
-        void tick(float deltaTime);
+        void tick();
 
         void quick_sort(std::vector<const Tank*>& sorted_tanks, int begin, int end);
         void quick_sort_init(const std::vector<Tank>& tanks, std::vector<const Tank*>& sorted_tanks, int begin, int end);

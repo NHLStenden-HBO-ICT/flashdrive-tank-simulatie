@@ -2,7 +2,7 @@
 
 namespace Tmpl8
 {
-    class Terrain; //forward declare
+    class Terrain;
     class Rocket;
 
 enum allignments

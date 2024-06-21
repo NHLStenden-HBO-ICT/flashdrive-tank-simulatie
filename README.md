@@ -19,5 +19,5 @@ Project FlashDrive is een geoptimaliseerde versie van een bestaande tank simulat
 ## Multithreaden
 •	Het multithreaden van het updaten van rockets heeft een significante snelheidsverbetering opgeleverd, met een gemiddelde speedup van 3,3 na alle verbeteringen. Aanvankelijk was de speedup 1,0 en na de algoritmische verbeteringen steeg deze naar 2,2.
 
-•	Ondanks dat het multithreaden van het updaten van tanks geen snelheidsvoordeel bood, is de code behouden voor toekomstige evaluaties.
+•	Ondanks dat het multithreaden van het updaten van tanks geen snelheidsvoordeel bood, is de code behouden voor beoordeling.
 

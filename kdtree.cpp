@@ -1,13 +1,4 @@
 #include "precomp.h"
-//
-// Created by joels on 5-3-2024.
-//
-
-#include <algorithm>
-#include <iostream>
-#include <limits>
-#include <valarray>
-
 
 Kdtree::~Kdtree() {
 	delete TreeRoot;
@@ -15,12 +6,16 @@ Kdtree::~Kdtree() {
 }
 
 
-
-
 Kdtree::Kdtree(const std::vector<Tank*>& tanks) {
     TreeRoot = buildTree(tanks, 0);
 }
 
+/// <summary>
+/// Build the KD-tree
+/// </summary>
+/// <param name="tanks">The tanks to sort into the tree</param>
+/// <param name="depth">The depth of the tree</param>
+/// <returns></returns>
 Node* Kdtree::buildTree(const std::vector<Tank*>& tanks, int depth) {
     if (tanks.empty()) {
         return nullptr;
@@ -28,7 +23,6 @@ Node* Kdtree::buildTree(const std::vector<Tank*>& tanks, int depth) {
 
     int axis = depth % 2;
 
-    // Sorteer de punten langs de huidige as
     std::vector<Tank*> sorted_tanks = tanks;
 
     int medianIndex = 0;
@@ -37,12 +31,10 @@ Node* Kdtree::buildTree(const std::vector<Tank*>& tanks, int depth) {
         std::sort(sorted_tanks.begin(), sorted_tanks.end(), [axis](const Tank* tank1, const Tank* tank2) {
             return (axis == 0) ? tank1->get_position().x < tank2->get_position().x : tank1->get_position().y < tank2->get_position().y;
             });
-        // Bepaal de median index
         medianIndex = sorted_tanks.size() / 2;
 
     }
     
-    // Maak een nieuwe knoop aan met het punt in het midden
     Node* newNode = new Node(sorted_tanks[medianIndex]);
 
     if (medianIndex == 1)
@@ -51,15 +43,21 @@ Node* Kdtree::buildTree(const std::vector<Tank*>& tanks, int depth) {
         return newNode;
     }
 
-    // Bouw recursief de linker- en rechter subtrees
     newNode->left = buildTree(std::vector<Tank*>(sorted_tanks.begin(), sorted_tanks.begin() + medianIndex), depth + 1);
     newNode->right = buildTree(std::vector<Tank*>(sorted_tanks.begin() + medianIndex + 1, sorted_tanks.end()), depth + 1);
 
     return newNode;
 }
 
-// Searches a Point represented by "targetPoint[]" in the K D tree.
-// The parameter depth is used to determine current axis.
+/// <summary>
+/// Search the KD-tree for the nearest tank
+/// </summary>
+/// <param name="root">The root of the KD-tree</param>
+/// <param name="targetTank">The tank to search for</param>
+/// <param name="closestTank">The current nearest tank</param>
+/// <param name="depth">The current depth of the KD-tree</param>
+/// <param name="closestDistance">The current closest distance</param>
+/// <returns>The nearest tank</returns>
 Tank* Kdtree::searchNearestTankRecursive(Node* root, const Tank* targetTank, Tank* closestTank, int depth, float& closestDistance) 
 {
     if (root == nullptr) {
@@ -70,7 +68,6 @@ Tank* Kdtree::searchNearestTankRecursive(Node* root, const Tank* targetTank, Tan
 
     if (root->tank != nullptr && root->tank->get_position() != targetTank->get_position())
     {
-        // Update het dichtstbijzijnde punt en de dichtstbijzijnde afstand.
         float dx = root->tank->get_position().x - targetTank->get_position().x;
         float dy = root->tank->get_position().y - targetTank->get_position().y;
         float distance = sqrt(dx * dx + dy * dy);
@@ -91,16 +88,29 @@ Tank* Kdtree::searchNearestTankRecursive(Node* root, const Tank* targetTank, Tan
     return searchNearestTankRecursive(nextNodeToVisit, targetTank, closestTank, depth + 1, closestDistance);
 }
 
+/// <summary>
+/// Get the next node to visit
+/// </summary>
+/// <param name="current">The current node</param>
+/// <param name="targetTank">The tank to search for</param>
+/// <param name="dimension">The dimension to search in</param>
+/// <returns>The next node</returns>
 Node* Kdtree::getNextNode(Node* current, const Tank* targetTank, int dimension) 
 {
+    int x_dimension = 0;
 
-    if (dimension == 0) {
+    if (dimension == x_dimension) {
         return (targetTank -> get_position().x > current->tank->get_position().x) ? current->right : current->left;
     }
     
     return (targetTank -> get_position().y > current->tank->get_position().y) ? current->right : current->left;
 }
 
+/// <summary>
+/// Search the KD-tree for the nearest tank
+/// </summary>
+/// <param name="targetTank">The tank to search for</param>
+/// <returns>The nearest tank</returns>
 Tank* Kdtree::searchNearestTank(Tank* targetTank)
 {
     float closestDistance = std::numeric_limits<float>::max();

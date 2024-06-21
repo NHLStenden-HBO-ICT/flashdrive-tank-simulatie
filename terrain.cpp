@@ -1,18 +1,18 @@
 #include "precomp.h"
-#include "terrain.h"
 
 namespace fs = std::filesystem;
 namespace Tmpl8
 {
+    /// <summary>
+    /// Constructor for Terrain class.
+    /// </summary>
     Terrain::Terrain()
     {
-        //Load in terrain sprites
         grass_img = std::make_unique<Surface>("assets/tile_grass.png");
         forest_img = std::make_unique<Surface>("assets/tile_forest.png");
         rocks_img = std::make_unique<Surface>("assets/tile_rocks.png");
         mountains_img = std::make_unique<Surface>("assets/tile_mountains.png");
         water_img = std::make_unique<Surface>("assets/tile_water.png");
-
 
         tile_grass = std::make_unique<Sprite>(grass_img.get(), 1);
         tile_forest = std::make_unique<Sprite>(forest_img.get(), 1);
@@ -85,11 +85,17 @@ namespace Tmpl8
     }
 
     
+    /// <summary>
+    /// Update terrain
+    /// </summary>
     void Terrain::update()
     {
-        //Pretend there is animation code here.. next year :)
     }
 
+
+	/// <summary>
+	/// Draw sprites on terrain
+	/// </summary>
     void Terrain::draw(Surface* target) const
     {
 
@@ -125,51 +131,40 @@ namespace Tmpl8
         }
     }
 
-    /**
- * Calculate a route from the current position of the tank to the specified target.
- *
- * @param tank The tank for which the route is calculated.
- * @param target The target position where the tank needs to move.
- * @return A vector of vec2 containing the coordinates of the tiles on the route.
- *         If a valid route cannot be found, an empty vector is returned.
- */
+    /// <summary>
+    /// Calculate a route from the current position of the tank to the specified target. 
+    /// </summary>
+    /// <param name="tank">The tank for which the route is calculated</param>
+    /// <param name="target">Target The target position where the tank needs to move.</param>
+    /// <returns>The coordinates of the tiles on the route, If a valid route cannot be found, an empty vector is returned</returns>
     vector<vec2> Terrain::get_route_dijkstra(const Tank& tank, const vec2& target)
     {
-        // Determine the x- and y-coordinates of the tank position and the target based on the sprite size
         const size_t pos_x = tank.position.x / sprite_size;
         const size_t pos_y = tank.position.y / sprite_size;
         const size_t target_x = target.x / sprite_size;
         const size_t target_y = target.y / sprite_size;
 
-        // Initialize the distance matrix and the visited array
         std::vector<std::vector<int>> distances(tiles.size(), std::vector<int>(tiles[0].size(), std::numeric_limits<int>::max()));
         std::vector<std::vector<TerrainTile*>> previous(tiles.size(), std::vector<TerrainTile*>(tiles[0].size(), nullptr));
         std::vector<std::vector<bool>> visited(tiles.size(), std::vector<bool>(tiles[0].size(), false));
 
-        // Set the distance of the starting tile to 0
         distances[pos_y][pos_x] = 0;
 
-        // Create a priority queue with distance as the sorting criterion
         std::priority_queue<std::pair<int, TerrainTile*>, std::vector<std::pair<int, TerrainTile*>>, std::greater<>> prio_queue;
         prio_queue.emplace(0, &tiles[pos_y][pos_x]);
 
-        // Perform Dijkstra's algorithm to find the shortest route
         while (!prio_queue.empty()) {
             TerrainTile* current_tile = prio_queue.top().second;
             prio_queue.pop();
 
-            // If the current tile is the target, stop searching
             if (current_tile->position_x == target_x && current_tile->position_y == target_y)
                 break;
 
-            // If the current tile has already been visited, continue with the next iteration
             if (visited[current_tile->position_y][current_tile->position_x])
                 continue;
 
-            // Mark the current tile as visited
             visited[current_tile->position_y][current_tile->position_x] = true;
 
-            // Loop through the exits of the current tile and update the distances
             for (TerrainTile* exit : current_tile->exits) {
                 int exit_x = exit->position_x;
                 int exit_y = exit->position_y;
@@ -194,12 +189,10 @@ namespace Tmpl8
         TerrainTile* current_tile = &tiles[target_y][target_x];
 
         while (current_tile != nullptr) {
-            // Add the current tile position to the route
             float x = static_cast<float>(current_tile->position_x) * sprite_size;
             float y = static_cast<float>(current_tile->position_y) * sprite_size;
             route.push_back(vec2(x, y));
 
-            // Move to the next tile in the route
             current_tile = previous[current_tile->position_y][current_tile->position_x];
         }
 
@@ -207,8 +200,11 @@ namespace Tmpl8
         return route;
     }
 
-
-    //TODO: Function not used and take speed into account next year :)
+    /// <summary>
+    /// Get speed modifier based on tile type
+    /// </summary>
+    /// <param name="position">Position to check</param>
+    /// <returns>Speed modifier</returns>
     float Terrain::get_speed_modifier(const vec2& position) const
     {
         const size_t pos_x = position.x / sprite_size;
@@ -237,6 +233,12 @@ namespace Tmpl8
         }
     }
 
+    /// <summary>
+    /// Check if tile is accessible
+    /// </summary>
+    /// <param name="y">Y-position of tank</param>
+    /// <param name="x">X-position of tank</param>
+    /// <returns></returns>
     bool Terrain::is_accessible(int y, int x)
     {
         //Bounds check

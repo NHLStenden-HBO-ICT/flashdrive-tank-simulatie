@@ -14,9 +14,9 @@ constexpr auto HEALTH_BAR_WIDTH = 70;
 constexpr auto MAX_FRAMES = 2000;
 
 //Global performance timer
-//constexpr auto REF_PERFORMANCE = 91947.5; // Release reference performance Joël
+constexpr auto REF_PERFORMANCE = 91947.5; // Release reference performance Joël
 
-constexpr auto REF_PERFORMANCE = 136400; // Release reference performance Yvonne, 2,2 speedup with all algorithms
+//constexpr auto REF_PERFORMANCE = 136400; // Release reference performance Yvonne, 2,2 speedup with all algorithms
 
 static timer perf_timer;
 static float duration;

@@ -2,7 +2,7 @@
 
 namespace Tmpl8
 {
-    class Terrain; //forward declare
+    class Terrain;
     class Rocket;
 
 enum allignments
@@ -13,7 +13,7 @@ enum allignments
 
 class Tank
 {
-  public:
+public:
     Tank(float pos_x, float pos_y, allignments allignment, Sprite* tank_sprite, Sprite* smoke_sprite, float tar_x, float tar_y, float collision_radius, int health, float max_speed);
 
     ~Tank();
@@ -63,4 +63,4 @@ class Tank
     static void update_tanks(vector<Tank>& tanks, Terrain& background_terrain, vector<Rocket>& rockets, float rocket_radius, Sprite& rocket_red, Sprite& rocket_blue);
 };
 
-} // namespace Tmpl8
+} 

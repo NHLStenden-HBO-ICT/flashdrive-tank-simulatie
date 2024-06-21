@@ -14,7 +14,6 @@ namespace Tmpl8
     class TerrainTile
     {
     public:
-        //TerrainTile *up, *down, *left, *right;
         vector<TerrainTile*> exits;
         bool visited = false;
 

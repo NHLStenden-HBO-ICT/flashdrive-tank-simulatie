@@ -19,5 +19,43 @@ Project FlashDrive is een geoptimaliseerde versie van een bestaande tank simulat
 ## Multithreaden
 •	Het multithreaden van het updaten van rockets heeft een significante snelheidsverbetering opgeleverd, met een gemiddelde speedup van 3,3 na alle verbeteringen. Aanvankelijk was de speedup 1,0 en na de algoritmische verbeteringen steeg deze naar 2,2.
 
-•	Ondanks dat het multithreaden van het updaten van tanks geen snelheidsvoordeel bood, is de code behouden voor beoordeling.
+•	Omdat het multithreaden van het updaten van tanks geen snelheidsvoordeel bood, is hieronder een code snippet van dit gedeelte opgenomen voor referentie.
 
+```c++
+void update_tank(Tank& tank, vector<Tank>& tanks, Terrain& background_terrain, vector<Rocket>& rockets, float rocket_radius, Sprite& rocket_red, Sprite& rocket_blue)
+{
+    //Move tanks according to speed and nudges (see above) also reload
+    tank.tick(background_terrain);
+
+    //Shoot at closest target if reloaded
+    if (tank.rocket_reloaded())
+    {
+        Tank& target = Tank::find_closest_enemy(tank, tanks);
+
+        rockets_mutex.lock();
+        rockets.push_back(Rocket(tank.position, (target.get_position() - tank.position).normalized() * 3, rocket_radius, tank.allignment, ((tank.allignment == RED) ? &rocket_red : &rocket_blue)));
+        rockets_mutex.unlock();
+
+        tank.reload_rocket();
+    }
+}
+
+void Tank::update_tanks(ThreadPool* pool, std::vector<std::future<void>>& futures, vector<Tank>& tanks, Terrain& background_terrain, vector<Rocket>& rockets, float rocket_radius, Sprite& rocket_red, Sprite& rocket_blue)
+{
+    futures.clear();
+    futures.reserve(tanks.size());
+
+    
+    for (Tank& tank : tanks)
+    {
+        if (tank.active)
+        {
+            futures.push_back(pool->enqueue([&tank, &tanks, &background_terrain, &rockets, rocket_radius, &rocket_red, &rocket_blue]() { update_tank(tank, tanks, background_terrain, rockets, rocket_radius, rocket_red, rocket_blue); }));
+        }
+    }
+    for (auto& future : futures)
+    {
+        future.get();
+    }
+}
+```

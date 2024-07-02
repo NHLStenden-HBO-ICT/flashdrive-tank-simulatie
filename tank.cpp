@@ -2,6 +2,7 @@
 
 namespace Tmpl8
 {
+    std::mutex rockets_mutex;
 
 Tank::Tank(
     float pos_x,
@@ -216,23 +217,53 @@ void Tank::check_tank_collision_with_kdtree(vector<Tank>& tanks) {
 /// <param name="rocket_radius">The radius of a rocket</param>
 /// <param name="rocket_red">Sprite for a red rocket</param>
 /// <param name="rocket_blue">Sprite for a blue rocket</param>
-void Tank::update_tanks(vector<Tank>& tanks, Terrain& background_terrain, vector<Rocket>& rockets, float rocket_radius, Sprite& rocket_red, Sprite& rocket_blue)
+void update_tank(Tank& tank, vector<Tank>& tanks, Terrain& background_terrain, vector<Rocket>& rockets, float rocket_radius, Sprite& rocket_red, Sprite& rocket_blue)
 {
-    for (Tank& tank : tanks)
+    //Move tanks according to speed and nudges (see above) also reload
+    tank.tick(background_terrain);
+
+    //Shoot at closest target if reloaded
+    if (tank.rocket_reloaded())
     {
-        if (tank.active)
+        Tank& target = Tank::find_closest_enemy(tank, tanks);
+
+        rockets_mutex.lock();
+        rockets.push_back(Rocket(tank.position, (target.get_position() - tank.position).normalized() * 3, rocket_radius, tank.allignment, ((tank.allignment == RED) ? &rocket_red : &rocket_blue)));
+        rockets_mutex.unlock();
+
+        tank.reload_rocket();
+    }
+}
+
+void update_tanks_per_thread(std::vector<Tank>::iterator start, std::vector<Tank>::iterator end, std::vector<Tank>& all_tanks, Terrain& background_terrain, std::vector<Rocket>& rockets, float rocket_radius, Sprite& rocket_red, Sprite& rocket_blue)
+{
+    for (auto it = start; it != end; ++it)
+    {
+        if (it->active)
         {
-            tank.tick(background_terrain);
-
-            if (tank.rocket_reloaded())
-            {
-                Tank& target = Tank::find_closest_enemy(tank, tanks);
-
-                rockets.push_back(Rocket(tank.position, (target.get_position() - tank.position).normalized() * 3, rocket_radius, tank.allignment, ((tank.allignment == RED) ? &rocket_red : &rocket_blue)));
-
-                tank.reload_rocket();
-            }
+            update_tank(*it, all_tanks, background_terrain, rockets, rocket_radius, rocket_red, rocket_blue);
         }
+    }
+}
+
+void Tank::update_tanks(size_t num_tanks, size_t num_threads, ThreadPool* pool, std::vector<std::future<void>>& futures, vector<Tank>& tanks, Terrain& background_terrain, vector<Rocket>& rockets, float rocket_radius, Sprite& rocket_red, Sprite& rocket_blue)
+{
+    futures.clear();
+    futures.reserve(num_threads);
+
+    size_t tanks_per_thread = std::ceil(static_cast<float>(num_tanks) / num_threads);
+
+    for (size_t i = 0; i < num_tanks; i += tanks_per_thread)
+    {
+        auto start = tanks.begin() + i;
+        auto end = tanks.begin() + std::min(num_tanks, i + tanks_per_thread);
+
+        futures.push_back(pool->enqueue([start, end, &tanks, &background_terrain, &rockets, rocket_radius, &rocket_red, &rocket_blue](){update_tanks_per_thread(start, end, tanks, background_terrain, rockets, rocket_radius, rocket_red, rocket_blue);}));
+    }
+
+    for (auto& future : futures)
+    {
+        future.get();
     }
 }
 

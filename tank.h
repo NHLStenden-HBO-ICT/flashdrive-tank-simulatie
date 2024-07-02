@@ -60,7 +60,7 @@ public:
     static void calculate_tank_routes(vector<Tank>& tanks, Terrain& background_terrain, long long& frame_count);
     static void check_tank_collision_with_kdtree(vector<Tank>& tanks);
     static Tank& find_closest_enemy(Tank& current_tank, vector<Tank>& tanks);
-    static void update_tanks(vector<Tank>& tanks, Terrain& background_terrain, vector<Rocket>& rockets, float rocket_radius, Sprite& rocket_red, Sprite& rocket_blue);
+    static void update_tanks(size_t num_tanks, size_t num_threads, ThreadPool* pool, std::vector<std::future<void>>& futures, vector<Tank>& tanks, Terrain& background_terrain, vector<Rocket>& rockets, float rocket_radius, Sprite& rocket_red, Sprite& rocket_blue);
 };
 
 } 
